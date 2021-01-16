@@ -14,9 +14,9 @@ Aimed at easy deploy and development.
 
 ## 安装和部署
 
-基于 (https://nonebot.netlify.app/)[nonebot] (one bot). 
+基于 [nonebot](https://nonebot.netlify.app/)(one bot). 
 
-1. 首先安装(https://github.com/Mrs4s/go-cqhttp)[go-cqhttp]，按其教程安装，输入QQ号等并确保其能正常启动（即，向该QQ发送消息可以在cqhttp控制台上收到消息）。
+1. 首先安装[go-cqhttp](https://github.com/Mrs4s/go-cqhttp)，按其教程安装，输入QQ号等并确保其能正常启动（即，向该QQ发送消息可以在cqhttp控制台上收到消息）。
 2. 然后安装docker和docker-compose
 3. 在项目根目录下执行`docker-compose up --build`。
 4. 你应该能看到一些提示，得到一个地址栏，在装有go-cqhttp的机器上，输入浏览器后能显示一些东西出来（通常是method not allowed的错误提示页面）。
