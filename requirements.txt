@@ -1,1 +1,2 @@
-nonebot
+nonebot==1.8.2
+xdice
