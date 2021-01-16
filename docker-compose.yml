@@ -3,6 +3,6 @@ services:
   web:
     build: .
     ports:
-      - "8081"
+      - "8081:8081"
     # volumes:
     #   - .:/app
