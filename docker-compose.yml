@@ -1,6 +1,7 @@
 version: '3'
 services:
   web:
+    network_mode: host
     build: .
     ports:
       - "8081:8081"
