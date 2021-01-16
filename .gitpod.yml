@@ -8,3 +8,5 @@ tasks:
 vscode:
   extensions:
     - codezombiech.gitignore@0.6.0:bt7z8Cdl9iHzv1Swj1aDcw==
+    - hbenl.vscode-test-explorer@2.19.4:k1U5F1c2ZouPEM4l6r4jDg==
+    - littlefoxteam.vscode-python-test-adapter@0.6.5:M/0xh/MNGJTptXts7fD1Ug==
