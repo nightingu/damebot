@@ -4,3 +4,7 @@ image:
 tasks:
   - init: pip install -r requirements.txt
     command: python main.py
+
+vscode:
+  extensions:
+    - codezombiech.gitignore@0.6.0:bt7z8Cdl9iHzv1Swj1aDcw==
