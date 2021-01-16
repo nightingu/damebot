@@ -48,7 +48,8 @@ jobs:
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
+          username: ${{ secrets.USER }}
+          password: ${{ secrets.PASSWORD }}
           port: 22
           source: "."
           target: "/home/${{ secrets.USER }}/app-damebot"
