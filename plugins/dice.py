@@ -6,7 +6,7 @@ from nonebot.log import logger
 async def diceroll(session: CommandSession):
     # get real command content
     command_text = session.current_arg_text.strip()
-    cmd = f"roll {command_text}"
+    cmd = f"python -m roll {command_text}"
     logger.info(f"trying to execute {cmd}")
     proc = await asyncio.create_subprocess_shell(
         cmd,
