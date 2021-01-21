@@ -50,6 +50,7 @@ jobs:
           script: |
             curl -v "http://127.0.0.1:5700/send_group_msg?group_id=$GROUPNO&message=$MSG"
           script_stop: true
+          envs: GROUPNO,MSG 
         env:
           GROUPNO: ${{ secrets.NOTIFY_GROUP_ID }}
           MSG: ${{ format('damebot is updating... \n {0}', fromJSON(steps.get_latest_release.outputs.data).repository.releases.nodes) }}
@@ -105,6 +106,7 @@ jobs:
           script: |
             curl -v "http://127.0.0.1:5700/send_group_msg?group_id=$GROUPNO&message=$MSG"
           script_stop: true
+          envs: GROUPNO,MSG
         env:
           GROUPNO: ${{ secrets.NOTIFY_GROUP_ID }}
           MSG: ${{ format('damebot update complete. \n {0}', fromJSON(steps.get_latest_release.outputs.data).repository.releases.nodes) }}
