@@ -65,7 +65,7 @@ jobs:
           TARGET: "/home/${{ secrets.USER }}/app-damebot"
           VERBOSE: true
           # PORT: 2222 # no need to set this, because of $SSH_ARGS
-          ARGS: -v --delete
+          ARGS: -v --delete --dirs
           SOURCE: "."
       - name: Start up damebot service
         uses: appleboy/ssh-action@master
