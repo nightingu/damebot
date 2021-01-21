@@ -65,12 +65,8 @@ jobs:
           TARGET: "/home/${{ secrets.USER }}/app-damebot"
           VERBOSE: true
           # PORT: 2222 # no need to set this, because of $SSH_ARGS
-          ARGS: --delete
+          ARGS: -v --delete
           SOURCE: "."
-          PRE_SCRIPT: |
-            echo start at:
-            date -u
-          POST_SCRIPT: "echo done at: && date -u"
       - name: Start up damebot service
         uses: appleboy/ssh-action@master
         with:
