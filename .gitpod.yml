@@ -5,7 +5,10 @@ tasks:
   - init: |
       pip install -r requirements.txt
       pip install -r test-requirements.txt
-    command: python main.py
+    command: |
+      python main.py
+  - command: |
+      echo open $(gp url 8081)/test/#/frontend to test nonebot!
 
 ports:
   - port: 3000-8999
