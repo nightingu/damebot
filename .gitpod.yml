@@ -7,6 +7,10 @@ tasks:
       pip install -r test-requirements.txt
     command: python main.py
 
+ports:
+  - port: 3000-8999
+    onOpen: ignore
+    
 vscode:
   extensions:
     - codezombiech.gitignore@0.6.0:bt7z8Cdl9iHzv1Swj1aDcw==
