@@ -13,8 +13,9 @@ dice : Matcher = on_command('d', aliases={'r', 'roll'}, priority=100)
 @dice.handle()
 async def diceroll(bot: Bot, event: Event, state: T_State, matcher: Matcher):
     # get real command content
+    logger.debug(f"event: {event}")
     logger.debug(f"state: {state}")
-    command_text = state["_suffix"]["raw_command"]
+    command_text = event.get_message().extract_plain_text()
     logger.debug(f"got command text {command_text}")
     cmd = f"python -m roll {command_text}"
     logger.info(f"trying to execute {cmd}")
