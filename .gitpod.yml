@@ -4,9 +4,10 @@ image:
 tasks:
   - init: |
       pip install -r requirements.txt
+      pip install -r dev-requirements.txt
       pip install -r test-requirements.txt
     command: |
-      python main.py
+      watchmedo auto-restart -d . -p "*.py" -R python main.py
   - command: |
       echo open $(gp url 8081)/test/#/frontend to test nonebot!
 
