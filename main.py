@@ -21,6 +21,7 @@ app.add_middleware(
 driver.register_adapter("cqhttp", CQHTTPBot)
 nonebot.load_builtin_plugins()
 nonebot.load_plugin("nonebot_plugin_test")
+nonebot.load_plugin("plugins.xdice")
 import nonebot_plugin_test
 nonebot_plugin_test.sio.eio.cors_allowed_origins = "*"
 

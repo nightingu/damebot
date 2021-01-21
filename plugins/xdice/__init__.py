@@ -1,17 +1,21 @@
-from nonebot import on_command, CommandSession
+import nonebot
+from nonebot import on_command
+from nonebot.adapters import Bot, Event
 from nonebot.matcher import Matcher
+from nonebot.typing import T_State
 import asyncio
 from nonebot.log import logger
 from random import choice, randint
 
 nonebot.get_driver()
-
 dice : Matcher = on_command('d', aliases={'r', 'roll'}, priority=100)
 
 @dice.handle()
-async def diceroll(bot: Bot, event: Event, matcher: Matcher):
+async def diceroll(bot: Bot, event: Event, state: T_State, matcher: Matcher):
     # get real command content
-    command_text = session.current_arg_text.strip()
+    logger.debug(f"state: {state}")
+    command_text = state["_suffix"]["raw_command"]
+    logger.debug(f"got command text {command_text}")
     cmd = f"python -m roll {command_text}"
     logger.info(f"trying to execute {cmd}")
     proc = await asyncio.create_subprocess_shell(
