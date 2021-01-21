@@ -32,6 +32,7 @@ jobs:
                 query release($owner:String!,$repo:String!) {
                   repository(owner:$owner, name:$repo) {
                     latestRelease {
+                      name
                       description
                     }
                   }
@@ -53,7 +54,7 @@ jobs:
           envs: GROUPNO,MSG 
         env:
           GROUPNO: ${{ secrets.NOTIFY_GROUP_ID }}
-          MSG: ${{ format('damebot is updating... \n {0}', fromJSON(steps.get_latest_release.outputs.data).repository.releases.nodes) }}
+          MSG: ${{ format('damebot is updating... {0} >> {1}', fromJSON(steps.get_latest_release.outputs.data).repository.latestRelease.name, fromJSON(steps.get_latest_release.outputs.data).repository.latestRelease.description) }}
 #       # Runs a single command using the runners shell
 #       - name: ssh-scp-ssh-pipelines
 #         # You may pin to the exact commit or the version.
@@ -109,6 +110,6 @@ jobs:
           envs: GROUPNO,MSG
         env:
           GROUPNO: ${{ secrets.NOTIFY_GROUP_ID }}
-          MSG: ${{ format('damebot update complete. \n {0}', fromJSON(steps.get_latest_release.outputs.data).repository.releases.nodes) }}
+          MSG: ${{ format('damebot updated! {0} >> {1}', fromJSON(steps.get_latest_release.outputs.data).repository.latestRelease.name, fromJSON(steps.get_latest_release.outputs.data).repository.latestRelease.description) }}
   
             
