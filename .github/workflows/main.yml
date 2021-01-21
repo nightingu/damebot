@@ -48,7 +48,7 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           port: 22
           script: |
-            curl -v "http://127.0.0.1:5700/send_group_msg?group_id=$GROUPNO&message=$MSG"
+            curl -v --data-urlencode "group_id=$GROUPNO" --data-urlencode "message=$MSG" "http://127.0.0.1:5700/send_group_msg"
           script_stop: true
           envs: GROUPNO,MSG 
         env:
@@ -104,7 +104,7 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           port: 22
           script: |
-            curl -v "http://127.0.0.1:5700/send_group_msg?group_id=$GROUPNO&message=$MSG"
+               curl -v --data-urlencode "group_id=$GROUPNO" --data-urlencode "message=$MSG" "http://127.0.0.1:5700/send_group_msg"
           script_stop: true
           envs: GROUPNO,MSG
         env:
