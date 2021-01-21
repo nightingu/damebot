@@ -4,6 +4,8 @@ import asyncio
 from nonebot.log import logger
 from random import choice, randint
 
+nonebot.get_driver()
+
 dice : Matcher = on_command('d', aliases={'r', 'roll'}, priority=100)
 
 @dice.handle()
