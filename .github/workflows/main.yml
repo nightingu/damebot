@@ -54,7 +54,7 @@ jobs:
           envs: GROUPNO,MSG 
         env:
           GROUPNO: ${{ secrets.NOTIFY_GROUP_ID }}
-          MSG: ${{ format('damebot is updating... {0}', fromJSON(steps.get_latest_release.outputs.data).repository.latestRelease.name }}
+          MSG: ${{ format('damebot is updating... {0}', fromJSON(steps.get_latest_release.outputs.data).repository.latestRelease.name) }}
       - name: Deploy damebot to Host
         uses: up9cloud/action-rsync@v1.1
         env:
