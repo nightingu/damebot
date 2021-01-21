@@ -10,13 +10,13 @@ nonebot.init(command_start = {',', '，'})
 driver = nonebot.get_driver()
 app = nonebot.get_app()
 
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["*"],
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 driver.register_adapter("cqhttp", CQHTTPBot)
 nonebot.load_builtin_plugins()
