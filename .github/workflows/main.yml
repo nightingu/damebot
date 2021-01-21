@@ -78,6 +78,9 @@ jobs:
           script: |
             cd app-damebot
             docker-compose up -d --build
+            sleep 5
+            docker-compose logs
+            docker-compose ps | (! grep Exit)
           script_stop: true
       - name: Send chat to group
         uses: appleboy/ssh-action@master
