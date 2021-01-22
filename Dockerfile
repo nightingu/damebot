@@ -8,7 +8,7 @@ RUN pip install -i https://mirrors.bfsu.edu.cn/pypi/web/simple -r requirements.t
 
 COPY . .
 
-ENV PYTHONPATH "${PYTHONPATH}:/app"
+ENV PYTHONPATH "/app"
 
 ENTRYPOINT [ "python" ]
 
