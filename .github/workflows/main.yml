@@ -66,7 +66,7 @@ jobs:
           TARGET: "/home/${{ secrets.USER }}/app-damebot"
           VERBOSE: true
           # PORT: 2222 # no need to set this, because of $SSH_ARGS
-          ARGS: -v --delete --dirs --exclude=.git
+          ARGS: -v --delete --dirs --recursive --exclude=.git
           SSH_ARGS: -p 22 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
           SOURCE: "."
       - name: Start up damebot service
