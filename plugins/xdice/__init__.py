@@ -8,9 +8,6 @@ from nonebot.log import logger
 from random import choice, randint
 import re
 
-nonebot.get_driver()
-dice : Matcher = on_command('d', aliases={'r', 'roll'}, priority=100)
-
 def start_end_alternative(first_start=True):
     if first_start:
         yield 0
@@ -19,7 +16,10 @@ def start_end_alternative(first_start=True):
         yield from [-i, i]
         i += 1
 
-async def summary(s: str, limit=50, keep_first=True, fill_in="などなど...\n"):
+def fill_in_generate():
+    return "\n" + choice(["いぉ","など"]) * randint(2,3) + "." * randint(3,6) + "\n"
+
+async def summary(s: str, limit=50, keep_first=True, fill_in_gen=fill_in_generate):
     if len(s) > limit:
         lines = s.splitlines(keepends=True)
         if len(lines) <= 1:
@@ -42,21 +42,15 @@ async def summary(s: str, limit=50, keep_first=True, fill_in="などなど...\n"
             if collected_counts > limit:
                 break
         ends.reverse()
-        return "".join(starts + [fill_in] + ends)
+        return "".join(starts).rstrip() + fill_in_gen() + "".join(ends).lstrip()
     else:
         return s
     
+nonebot.get_driver()
+dice : Matcher = on_command('d', aliases={'r', 'roll'}, priority=100)
 
-
-@dice.handle()
-async def diceroll(bot: Bot, event: Event, state: T_State, matcher: Matcher):
-    # get real command content
-    logger.debug(f"event: {event}")
-    logger.debug(f"state: {state}")
-    command_text = event.get_message().extract_plain_text()
-    logger.debug(f"got command text {command_text}")
-    cmd = f"python -m roll {command_text}"
-    logger.info(f"trying to execute {cmd}")
+async def execute(cmd):
+    logger.info(f"trying to execute '{cmd}'")
     proc = await asyncio.create_subprocess_shell(
         cmd,
         stdout=asyncio.subprocess.PIPE,
@@ -68,10 +62,23 @@ async def diceroll(bot: Bot, event: Event, state: T_State, matcher: Matcher):
     logger.debug(f"got stderr \nf{stderr}")
     if proc.returncode == 0:
     # also can use proc.returncode
-        await matcher.finish(stdout.decode())
+        output = stdout.decode()
     else:
         err_short = await summary(stderr.decode())
-        await matcher.finish(
+        output = \
 f"""{choice(['ダメ', '駄目'])}{choice(['です', ''])}{"！" * randint(0,5)}
   {err_short}      
-""")
+"""
+    return output
+
+@dice.handle()
+
+async def diceroll(bot: Bot, event: Event, state: T_State, matcher: Matcher):
+    # get real command content
+    logger.debug(f"event: {event}")
+    logger.debug(f"state: {state}")
+    command_text = event.get_message().extract_plain_text()
+    logger.debug(f"got command text '{command_text}'")
+    cmd = f"python -m roll {command_text}"
+    output = await execute(cmd)
+    await matcher.finish(output)
