@@ -19,6 +19,11 @@ def start_end_alternative(first_start=True):
 def fill_in_generate():
     return "\n" + choice(["いぉ","など"]) * randint(2,3) + "." * randint(3,6) + "\n"
 
+def dame(err: str):
+    return f"""{choice(['ダメ', '駄目'])}{choice(['です', ''])}{"！" * randint(0,5)}
+  {err}      
+""".strip()
+
 async def summary(s: str, limit=50, keep_first=True, fill_in_gen=fill_in_generate):
     if len(s) > limit:
         lines = s.splitlines(keepends=True)
@@ -42,13 +47,10 @@ async def summary(s: str, limit=50, keep_first=True, fill_in_gen=fill_in_generat
             if collected_counts > limit:
                 break
         ends.reverse()
-        return "".join(starts).rstrip() + fill_in_gen() + "".join(ends).lstrip()
+        return ("".join(starts) + fill_in_gen() + "".join(ends)).strip()
     else:
         return s
     
-nonebot.get_driver()
-dice : Matcher = on_command('d', aliases={'r', 'roll'}, priority=100)
-
 async def execute(cmd):
     logger.info(f"trying to execute '{cmd}'")
     proc = await asyncio.create_subprocess_shell(
@@ -65,14 +67,13 @@ async def execute(cmd):
         output = stdout.decode()
     else:
         err_short = await summary(stderr.decode())
-        output = \
-f"""{choice(['ダメ', '駄目'])}{choice(['です', ''])}{"！" * randint(0,5)}
-  {err_short}      
-"""
+        output = dame(err_short)
     return output
 
-@dice.handle()
+nonebot.get_driver()
+dice : Matcher = on_command('d', aliases={'r', 'roll'}, priority=100)
 
+@dice.handle()
 async def diceroll(bot: Bot, event: Event, state: T_State, matcher: Matcher):
     # get real command content
     logger.debug(f"event: {event}")
@@ -81,4 +82,34 @@ async def diceroll(bot: Bot, event: Event, state: T_State, matcher: Matcher):
     logger.debug(f"got command text '{command_text}'")
     cmd = f"python -m roll {command_text}"
     output = await execute(cmd)
+    await matcher.finish(output)
+
+async def identity(x):
+    return x
+
+async def wait_lazy_dict(d: dict):
+    keys = d.keys()
+    values = await asyncio.gather(*d.values())
+    return {k:v for k,v in zip(keys, values)}
+
+helper : Matcher = on_command('h', aliases={'help'}, priority=50)
+@helper.handle()
+async def help(bot: Bot, event: Event, state: T_State, matcher: Matcher):
+    # get real command content
+    logger.debug(f"event: {event}")
+    logger.debug(f"state: {state}")
+    command_text = event.get_message().extract_plain_text().strip()
+    logger.debug(f"got command text '{command_text}'")
+    # TODO: change to plugin.matcher for plugin in nonebot.get_loaded_plugins() 
+    if command_text == "":
+        help_table = {
+            "d(r/roll)": execute(f"python -m roll --version d"),
+            "h(help)": identity("help for damebot.")
+        }
+        help_table = await wait_lazy_dict(help_table)
+        output = "\n".join(f"{k}:{v}" for k,v in help_table.items())
+    elif command_text in {"d", "r", "roll"}:
+        output = await execute("python -m roll --help")
+    else:
+        output = dame(f"No help for '{command_text}'")
     await matcher.finish(output)
