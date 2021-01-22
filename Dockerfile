@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY ./requirements.txt requirements.txt
 
-RUN pip install -r requirements.txt
+RUN pip install -i https://mirrors.bfsu.edu.cn/pypi/web/simple -r requirements.txt
 
 COPY . .
 
