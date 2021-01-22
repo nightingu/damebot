@@ -107,7 +107,7 @@ async def help(bot: Bot, event: Event, state: T_State, matcher: Matcher):
             "h(help)": identity("help for damebot.")
         }
         help_table = await wait_lazy_dict(help_table)
-        output = "\n".join(f"{k}:{v}" for k,v in help_table.items())
+        output = "\n".join(f"{k}:{v.strip()}" for k,v in help_table.items())
     elif command_text in {"d", "r", "roll"}:
         output = await execute("python -m roll --help")
     else:
