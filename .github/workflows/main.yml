@@ -80,8 +80,8 @@ jobs:
             cd app-damebot
             docker-compose up -d --build
             sleep 5
-            docker-compose logs | (! grep ERROR)
-            docker-compose ps | (! grep Exit)
+            docker-compose logs | tee >(cat 1>&2) | (! grep ERROR)
+            docker-compose ps | tee >(cat 1>&2) | (! grep Exit)
           script_stop: true
       - name: Send chat to group
         uses: appleboy/ssh-action@master
