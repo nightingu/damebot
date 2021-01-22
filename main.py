@@ -26,6 +26,6 @@ import nonebot_plugin_test
 nonebot_plugin_test.sio.eio.cors_allowed_origins = "*"
 
 if __name__ == '__main__':
-    nonebot.run(host='127.0.0.1', port=8081)
+    nonebot.run(host='0.0.0.0', port=8081)
 
     
