@@ -7,6 +7,7 @@ import asyncio
 from nonebot.log import logger
 from random import choice, randint
 import re
+import shlex
 
 def start_end_alternative(first_start=True):
     if first_start:
@@ -51,14 +52,15 @@ async def summary(s: str, limit=50, keep_first=True, fill_in_gen=fill_in_generat
     else:
         return s
     
-async def execute(cmd):
-    logger.info(f"trying to execute '{cmd}'")
-    proc = await asyncio.create_subprocess_shell(
-        cmd,
+async def execute(*cmd):
+    cmd_text = shlex.join(cmd)
+    logger.info(f"trying to execute '{cmd_text}'")
+    proc = await asyncio.create_subprocess_exec(
+        *cmd,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE
     )
-    logger.debug(f"{cmd} process created.")
+    logger.debug(f"{cmd_text} process created.")
     stdout, stderr = await proc.communicate()
     logger.debug(f"got stdout \nf{stdout}")
     logger.debug(f"got stderr \nf{stderr}")
@@ -80,8 +82,7 @@ async def diceroll(bot: Bot, event: Event, state: T_State, matcher: Matcher):
     logger.debug(f"state: {state}")
     command_text = event.get_message().extract_plain_text()
     logger.debug(f"got command text '{command_text}'")
-    cmd = f"python -m roll {command_text}"
-    output = await execute(cmd)
+    output = await execute("python", "-m", "roll", *shlex.split(command_text))
     await matcher.finish(output)
 
 async def identity(x):
@@ -103,13 +104,13 @@ async def help(bot: Bot, event: Event, state: T_State, matcher: Matcher):
     # TODO: change to plugin.matcher for plugin in nonebot.get_loaded_plugins() 
     if command_text == "":
         help_table = {
-            "d(r/roll)": execute(f"python -m roll --version d"),
+            "d(r/roll)": execute(f"python", "-m", "roll", "--version", "d"),
             "h(help)": identity("help for damebot.")
         }
         help_table = await wait_lazy_dict(help_table)
         output = "\n".join(f"{k}:{v.strip()}" for k,v in help_table.items())
     elif command_text in {"d", "r", "roll"}:
-        output = await execute("python -m roll --help")
+        output = await execute("python", "-m", "roll", "--help")
     else:
         output = dame(f"No help for '{command_text}'")
     await matcher.finish(output)
