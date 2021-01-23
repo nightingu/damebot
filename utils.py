@@ -72,10 +72,12 @@ async def execute(cmd):
     return output
 
 async def multi_execute(cmd, user_typed_cmd, help_obj):
+    logger.debug("using execute help producer")
     result = await execute(" ".join([cmd, user_typed_cmd, help_obj]))
     return result
 
 async def plain_string(cmd, user_typed_cmd, help_obj):
+    logger.debug("using plain_string help producer")
     return help_obj
 
 import inspect
@@ -129,6 +131,10 @@ class CommandBuilder:
             help_short_async_factory = help_async_factory if help_short_text is None else plain_string
         if help_long_async_factory is None:
             help_long_async_factory = help_async_factory if help_long_text is None else plain_string  
+        if help_short_text is not None:
+            help_short = help_short_text
+        if help_long_text is not None:
+            help_long = help_long_text
         self.cmd = cmd
         self.cmd_in_dice = cmd_in_dice
         self.help_short = help_short
@@ -140,7 +146,7 @@ class CommandBuilder:
         self.extra_kwargs = extra_kwargs
 
     def build_help(self, *help_prefixes, priority=None, recursive=True, **help_args):
-        logger.info(f"building help for '{self.cmd}'")
+        logger.info(f"building help for '{self.cmd}' using '{self.help_short_async_factory.__name__}:{self.help_short}' and '{self.help_long_async_factory.__name__}:{self.help_long}'")
         if priority is None:
             priority = self.priority // 2
         if len(help_prefixes) == 0:
@@ -160,8 +166,9 @@ class CommandBuilder:
             logger.debug(f"state: {state}")
             origin_command = state['_prefix']['raw_command']
             command_text = event.get_message().extract_plain_text()
+            logger.debug(f"got command text '{command_text}'")
             extra_prompt = ""
-            if not command_text.startswith(" "):
+            if not command_text.startswith(" ") and command_text != "":
                 extra_prompt += f"treat '{origin_command + command_text}' as '{origin_command}'\n"
                 logger.warning(extra_prompt)
                 command_text = ""
@@ -180,12 +187,14 @@ f"""
 {extra_prompt}{help_long_text.strip()}
 
 sub-commands:
-f{newline.join(f'{k}:{v.strip()}' for k,v in zip(
-    ('|'.join(comm.cmd_in_dice) for comm in self.sub_commands()), sub_commands_texts)
+{newline.join(f'{k}:{v.strip()}' for k,v in zip(
+    ('|'.join(comm.cmd_in_dice) for comm in self.sub_commands), 
+    sub_commands_texts
+    )
 ).strip()}
 """.strip()
-            matcher.send(output)
-        logger.info(f"builded help '{self.cmd}'")
+            await matcher.send(output)
+        logger.info(f"builded help")
         return (matcher, sub_matchers) if sub_matchers else matcher     
 
     def build(self, build_sub=True, recursive=False) -> Matcher:
@@ -210,12 +219,8 @@ f{newline.join(f'{k}:{v.strip()}' for k,v in zip(
                 await matcher.send(output)
             matcher.command_builder = self
         matcher_subs = [x.build(build_sub=recursive, recursive=recursive) for x in self.sub_commands] if build_sub else None
+        logger.info(f"builded '{self.cmd}'")
         for item in [matcher, matcher_subs]:
             if item is not None:
                 return item
-        logger.info(f"builded '{self.cmd}'")
 
-
-
-
-    
