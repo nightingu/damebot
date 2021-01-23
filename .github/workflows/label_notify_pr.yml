@@ -14,25 +14,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/labeler@v2
-      with:
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
-        
-
     - name: GitHub GraphQL API Query
       # You may pin to the exact commit or the version.
       # uses: octokit/graphql-action@5b35793a23d626e7528da63fc3b47a5bc06b628c
       uses: octokit/graphql-action@v2.2.1
-      id: get_latest_release
+      id: get_latest_pr
       with:
         query: |
-              query repository(owner:$owner, name:$repo) {
-                pullRequests(last:1) {
-                  nodes {
-                    id
-                    title
-                    author {
-                      login
+              query release($owner:String!,$repo:String!) {
+                repository(owner:$owner, name:$repo) {
+                  pullRequests(last:1) {
+                    nodes {
+                      number
+                      title
+                      author {
+                        login
+                      }
                     }
                   }
                 }
@@ -43,7 +40,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Send chat to group
       uses: appleboy/ssh-action@master
-      if: ${{ github.event_name == 'release' && success() }}
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USER }}
@@ -55,5 +51,5 @@ jobs:
         envs: GROUPNO,MSG 
       env:
         GROUPNO: ${{ secrets.NOTIFY_GROUP_ID }}
-        MSG: ${{ format('{0} proposed new things! #{1} {2}', fromJSON(steps.get_latest_release.outputs.data).repository.pullRequests.nodes[0].author.login, fromJSON(steps.get_latest_release.outputs.data).repository.pullRequests.nodes[0].id, fromJSON(steps.get_latest_release.outputs.data).repository.pullRequests.nodes[0].title) }}
-
+        MSG: ${{ format('{0} proposed new things \#{1} >> {2}', fromJSON(steps.get_latest_pr.outputs.data).repository.pullRequests.nodes[0].author.login,fromJSON(steps.get_latest_pr.outputs.data).repository.pullRequests.nodes[0].number,fromJSON(steps.get_latest_pr.outputs.data).repository.pullRequests.nodes[0].title) }}
+ 
