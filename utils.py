@@ -182,11 +182,20 @@ f"""
 sub-commands:
 f{newline.join(f'{k}:{v.strip()}' for k,v in zip(
     ('|'.join(comm.cmd_in_dice) for comm in self.sub_commands()), sub_commands_texts)
+<<<<<<< HEAD
 ).strip()}
 """.strip()
             matcher.send(output)
         logger.info(f"builded help '{self.cmd}'")
         return (matcher, sub_matchers) if sub_matchers else matcher     
+=======
+)}
+""".strip()
+            matcher.send(output)
+
+
+        
+>>>>>>> be71397e4edb62560f3619a33ee310ad2fb88e37
 
     def build(self, build_sub=True, recursive=False) -> Matcher:
         logger.info(f"building '{self.cmd}'")
