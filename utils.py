@@ -93,7 +93,7 @@ class CommandBuilder:
         help_short_async_factory=None, 
         help_long_async_factory=None, 
         sub_commands=None, 
-        priority=100, 
+        priority=65536, 
         **extra_kwargs):
         _locals = locals()
         _spec = inspect.getfullargspec(self.__init__)
