@@ -40,7 +40,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Send chat to group
       uses: appleboy/ssh-action@master
-      if: ${{ github.event_name == 'release' && success() }}
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USER }}
