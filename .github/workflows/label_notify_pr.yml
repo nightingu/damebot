@@ -21,13 +21,15 @@ jobs:
       id: get_latest_pr
       with:
         query: |
-              query repository(owner:$owner, name:$repo) {
-                pullRequests(last:1) {
-                  nodes {
-                    id
-                    title
-                    author {
-                      login
+              query release($owner:String!,$repo:String!) {
+                repository(owner:$owner, name:$repo) {
+                  pullRequests(last:1) {
+                    nodes {
+                      id
+                      title
+                      author {
+                        login
+                      }
                     }
                   }
                 }
