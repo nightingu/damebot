@@ -79,15 +79,17 @@ async def plain_string(_, doc):
     return doc
 
 class CommandBuilder:
-    def __init__(self, cmd, *cmd_in_dice, help_short="--version", help_long="--help", help_async_factory=multi_execute, help_short_async_factory=None, help_long_async_factory=None, sub_commands=None, priority=100, **kwargs):
+    def __init__(self, cmd, *cmd_in_dice, help_short="--version", help_short_text=None, help_long="--help", help_long_text=None, help_async_factory=None, help_short_async_factory=None, help_long_async_factory=None, sub_commands=None, priority=100, **kwargs):
         if len(cmd_in_dice) == 0:
             cmd_in_dice = [cmd]
         if sub_commands is None:
             sub_commands = []
+        if help_async_factory is None:
+            help_async_factory = multi_execute
         if help_short_async_factory is None:
-            help_short_async_factory = help_async_factory
+            help_short_async_factory = help_async_factory if help_short_text is None else plain_string
         if help_long_async_factory is None:
-            help_long_async_factory = help_async_factory            
+            help_long_async_factory = help_async_factory if help_long_text is None else plain_string            
         self.cmd = cmd
         self.cmd_in_dice = cmd_in_dice
         self.help_short = help_short
