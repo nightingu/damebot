@@ -31,6 +31,9 @@ jobs:
                   nodes {
                     id
                     title
+                    author {
+                      login
+                    }
                   }
                 }
               }
@@ -52,5 +55,5 @@ jobs:
         envs: GROUPNO,MSG 
       env:
         GROUPNO: ${{ secrets.NOTIFY_GROUP_ID }}
-        MSG: ${{ format('Somebody proposed new things! #{0} {1}', fromJSON(steps.get_latest_release.outputs.data).repository.pullRequests.nodes[0].id, fromJSON(steps.get_latest_release.outputs.data).repository.pullRequests.nodes[0].title) }}
+        MSG: ${{ format('{0} proposed new things! #{1} {2}', fromJSON(steps.get_latest_release.outputs.data).repository.pullRequests.nodes[0].author.login, fromJSON(steps.get_latest_release.outputs.data).repository.pullRequests.nodes[0].id, fromJSON(steps.get_latest_release.outputs.data).repository.pullRequests.nodes[0].title) }}
 
