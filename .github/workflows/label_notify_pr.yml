@@ -23,7 +23,7 @@ jobs:
       # You may pin to the exact commit or the version.
       # uses: octokit/graphql-action@5b35793a23d626e7528da63fc3b47a5bc06b628c
       uses: octokit/graphql-action@v2.2.1
-      id: get_latest_release
+      id: get_latest_pr
       with:
         query: |
               query repository(owner:$owner, name:$repo) {
@@ -55,5 +55,5 @@ jobs:
         envs: GROUPNO,MSG 
       env:
         GROUPNO: ${{ secrets.NOTIFY_GROUP_ID }}
-        MSG: ${{ format('{0} proposed new things', fromJSON(steps.get_latest_release.outputs.data).repository.pullRequests.nodes[0].author.login) }}
+        MSG: ${{ format('{0} proposed new things', fromJSON(steps.get_latest_pr.outputs.data).repository.pullRequests.nodes[0].author.login) }}
 
