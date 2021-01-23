@@ -55,5 +55,5 @@ jobs:
         envs: GROUPNO,MSG 
       env:
         GROUPNO: ${{ secrets.NOTIFY_GROUP_ID }}
-        MSG: ${{ format('{0} proposed new things! id:', fromJSON(steps.get_latest_release.outputs.data).repository.pullRequests.nodes[0].author.login) }}
+        MSG: ${{ format('{0} proposed new things', fromJSON(steps.get_latest_release.outputs.data).repository.pullRequests.nodes[0].author.login) }}
 
