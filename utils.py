@@ -101,7 +101,7 @@ class CommandBuilder:
         if sub_commands is None:
             sub_commands = []
         else:
-            if isinstance(sub_commands, str, CommandBuilder, dict):
+            if isinstance(sub_commands, (str, CommandBuilder, dict)):
                 sub_commands = [sub_commands]
             new_sub_commands = []
             for sub_command in sub_commands:
@@ -140,7 +140,7 @@ class CommandBuilder:
         self.extra_kwargs = extra_kwargs
 
     def build_help(self, *help_prefixes, priority=None, recursive=True, **help_args):
-        if prioirty is None:
+        if priority is None:
             priority = self.priority // 2
         if len(help_prefixes) == 0:
             help_prefixes = ["help"]
@@ -180,16 +180,13 @@ f"""
 sub-commands:
 f{newline.join(f'{k}:{v.strip()}' for k,v in zip(
     ('|'.join(comm.cmd_in_dice) for comm in self.sub_commands()), sub_commands_texts)
-)}
+).strip()}
 """.strip()
             matcher.send(output)
-        return (matcher, sub_matchers) if sub_matchers else matcher
-        
-
-
-        
+        return (matcher, sub_matchers) if sub_matchers else matcher     
 
     def build(self, build_sub=True, recursive=False) -> Matcher:
+        logger.info(f"building {self.cmd}")
         if recursive:
             build_sub = True
         matcher = None
