@@ -1,2 +1,2 @@
-watchdog[watchmedo]
-nb-cli
+watchdog[watchmedo]==1.0.2
+nb-cli==0.3.1
