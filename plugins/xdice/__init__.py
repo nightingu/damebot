@@ -18,7 +18,7 @@ nonebot.get_driver()
 dice : Matcher = CommandBuilder(
     "python -m roll", 
     "r", "d", "roll",
-    help_short="--version d"
+    help_short="--version d",
 ).build()
 
 async def identity(x):

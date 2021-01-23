@@ -71,20 +71,21 @@ async def execute(cmd):
         output = dame(err_short)
     return output
 
+async def multi_execute(*extra):
+    result = await execute(" ".join(x.strip() for x in extra))
+    return result
+
 class CommandBuilder:
-    def __init__(self, cmd, *cmd_in_dice, help_short="--version", help_long="--help", sub_commands=None, priority=100, **kwargs):
+    def __init__(self, cmd, *cmd_in_dice, help_short="--version", help_long="--help", help_async_factory=multi_execute, sub_commands=None, priority=100, **kwargs):
         if not cmd_in_dice:
             cmd_in_dice = [cmd]
-        if isinstance(help_short, str):
-            help_short = execute(" ".join([cmd, help_short]))
-        if isinstance(help_long, str):
-            help_long = execute(" ".join([cmd, help_long]))
         if sub_commands is None:
             sub_commands = []
         self.cmd = cmd
         self.cmd_in_dice = cmd_in_dice
         self.help_short = help_short
         self.help_long = help_long
+        self.help_async_factory = help_async_factory
         self.sub_commands = sub_commands
         self.priority = priority
         self.extra_kwargs = kwargs
