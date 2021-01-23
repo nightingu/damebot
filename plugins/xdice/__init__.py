@@ -7,6 +7,7 @@ import asyncio
 from nonebot.log import logger
 from random import choice, randint
 import re
+import shlex
 
 def start_end_alternative(first_start=True):
     if first_start:
@@ -53,8 +54,8 @@ async def summary(s: str, limit=50, keep_first=True, fill_in_gen=fill_in_generat
     
 async def execute(cmd):
     logger.info(f"trying to execute '{cmd}'")
-    proc = await asyncio.create_subprocess_shell(
-        cmd,
+    proc = await asyncio.create_subprocess_exec(
+        *shlex.split(cmd),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE
     )
