@@ -1,0 +1,56 @@
+# This workflow will triage pull requests and apply a label based on the
+# paths that are modified in the pull request.
+#
+# To use this workflow, you will need to set up a .github/labeler.yml
+# file with configuration.  For more information, see:
+# https://github.com/actions/labeler
+
+name: Labeler
+on: [pull_request]
+
+jobs:
+  label:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/labeler@v2
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        
+
+    - name: GitHub GraphQL API Query
+      # You may pin to the exact commit or the version.
+      # uses: octokit/graphql-action@5b35793a23d626e7528da63fc3b47a5bc06b628c
+      uses: octokit/graphql-action@v2.2.1
+      id: get_latest_release
+      with:
+        query: |
+              query repository(owner:$owner, name:$repo) {
+                pullRequests(last:1) {
+                  nodes {
+                    id
+                    title
+                  }
+                }
+              }
+        owner: ${{ github.repository_owner }}
+        repo: ${{ github.event.repository.name }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Send chat to group
+      uses: appleboy/ssh-action@master
+      if: ${{ github.event_name == 'release' && success() }}
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER }}
+        password: ${{ secrets.PASSWORD }}
+        port: 22
+        script: |
+          curl -v --data-urlencode "group_id=$GROUPNO" --data-urlencode "message=$MSG" "http://127.0.0.1:5700/send_group_msg"
+        script_stop: true
+        envs: GROUPNO,MSG 
+      env:
+        GROUPNO: ${{ secrets.NOTIFY_GROUP_ID }}
+        MSG: ${{ format('Somebody proposed new things! #{0} {1}', fromJSON(steps.get_latest_release.outputs.data).repository.pullRequests.nodes[0].id, fromJSON(steps.get_latest_release.outputs.data).repository.pullRequests.nodes[0].title) }}
+
