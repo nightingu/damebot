@@ -71,12 +71,12 @@ async def execute(cmd):
         output = dame(err_short)
     return output
 
-async def multi_execute(*extra):
-    result = await execute(" ".join(x.strip() for x in extra))
+async def multi_execute(cmd, user_typed_cmd, help_obj):
+    result = await execute(" ".join([cmd, user_typed_cmd, help_obj]))
     return result
 
-async def plain_string(_, doc):
-    return doc
+async def plain_string(cmd, user_typed_cmd, help_obj):
+    return help_obj
 
 import inspect
 class CommandBuilder:
@@ -144,16 +144,49 @@ class CommandBuilder:
             priority = self.priority // 2
         if len(help_prefixes) == 0:
             help_prefixes = ["help"]
-        main_command, *aliases = [x + " " for x in self.cmd_in_dice]
+        all_commands_combined = [help_name + ("" if self.cmd is None else f" {self_name}") for self_name in self.cmd_in_dice for help_name in help_prefixes]
+        main_command, *aliases = all_commands_combined
         aliases = set(aliases)
+        sub_matchers = None
+        if recursive:
+            sub_matchers = [child_cmd.build_help(*help_prefixes, priority=priority, recursive=recursive, **help_args) for child_cmd in self.sub_commands]        
         matcher = on_command(main_command, aliases=aliases, priority=priority, **help_args)
+        @matcher.handle()
         async def help(bot: Bot, event: Event, state: T_State, matcher: Matcher):
             # get real command content
             logger.debug(f"event: {event}")
             logger.debug(f"state: {state}")
-            command_text = event.get_message().extract_plain_text().strip()
-            logger.debug(f"got command text '{command_text}'")
+            origin_command = state['_prefix']['raw_command']
+            command_text = event.get_message().extract_plain_text()
+            extra_prompt = ""
+            if not command_text.startswith(" "):
+                extra_prompt += f"treat '{origin_command + command_text}' as '{origin_command}'\n"
+                logger.warning(extra_prompt)
+                command_text = ""
+            else:
+                command_text = command_text.strip()
+            command_without_help = origin_command.split()[-1]
+            logger.debug(f"{command_without_help} => {self.cmd}")
+            logger.debug(f"planning to call with '{self.cmd}', '{command_text}', '{self.help_long}'")
             # TODO: add help command execute (using helper factory).
+            help_long_text = await self.help_long_async_factory(self.cmd, command_text, self.help_long)
+            
+            sub_commands_texts = await asyncio.gather(*[command.help_short_async_factory(command.cmd, command_text, command.help_short) for command in self.sub_commands])
+            newline = '\n'
+            output = \
+f"""
+{extra_prompt}{help_long_text.strip()}
+
+sub-commands:
+f{newline.join(f'{k}:{v.strip()}' for k,v in zip(
+    ('|'.join(comm.cmd_in_dice) for comm in self.sub_commands()), sub_commands_texts)
+)}
+""".strip()
+            matcher.send(output)
+        return (matcher, sub_matchers) if sub_matchers else matcher
+        
+
+
         
 
     def build(self, build_sub=True, recursive=False) -> Matcher:
