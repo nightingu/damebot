@@ -1,5 +1,5 @@
 import nonebot
-from nonebot import on_command
+from nonebot import on_command, on_regex
 from nonebot.adapters import Bot, Event
 from nonebot.matcher import Matcher
 from nonebot.typing import T_State
@@ -156,16 +156,20 @@ class CommandBuilder:
         aliases = set(aliases)
         sub_matchers = None
         if recursive:
-            sub_matchers = [child_cmd.build_help(*help_prefixes, priority=priority, recursive=recursive, **help_args) for child_cmd in self.sub_commands]        
-        logger.info(f"building command help matcher with '{main_command}'({aliases}), prior={priority}, kwargs={help_args}")
-        matcher = on_command(main_command, aliases=aliases, priority=priority, **help_args)
+            sub_matchers = [child_cmd.build_help(*help_prefixes, priority=priority-1, recursive=recursive, **help_args) for child_cmd in self.sub_commands]        
+        config = nonebot.get_driver().config
+        command_start = config.command_start
+        regex = f"^({'|'.join(command_start)})({'|'.join(all_commands_combined)})(.*)$"
+        logger.info(f"building command help matcher with {regex}, prior={priority}, kwargs={help_args}")
+        matcher = on_regex(regex, block=True, priority=priority, **help_args)
         @matcher.handle()
         async def help(bot: Bot, event: Event, state: T_State, matcher: Matcher):
             # get real command content
             logger.debug(f"event: {event}")
             logger.debug(f"state: {state}")
-            origin_command = state['_prefix']['raw_command']
-            command_text = event.get_message().extract_plain_text()
+            msg = event.get_message().extract_plain_text()
+            logger.debug(f"got message '{msg}'")
+            _, origin_command, command_text = re.match(regex, msg).groups()
             logger.debug(f"got command text '{command_text}'")
             extra_prompt = ""
             if not command_text.startswith(" ") and command_text != "":
@@ -192,7 +196,7 @@ sub-commands:
     )
 ).strip()}
 """.strip()
-            await matcher.send(output)
+            await matcher.finish(output)
         logger.info(f"builded help")
         return (matcher, sub_matchers) if sub_matchers else matcher     
 
