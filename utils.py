@@ -75,17 +75,25 @@ async def multi_execute(*extra):
     result = await execute(" ".join(x.strip() for x in extra))
     return result
 
+async def plain_string(_, doc):
+    return doc
+
 class CommandBuilder:
-    def __init__(self, cmd, *cmd_in_dice, help_short="--version", help_long="--help", help_async_factory=multi_execute, sub_commands=None, priority=100, **kwargs):
-        if not cmd_in_dice:
+    def __init__(self, cmd, *cmd_in_dice, help_short="--version", help_long="--help", help_async_factory=multi_execute, help_short_async_factory=None, help_long_async_factory=None, sub_commands=None, priority=100, **kwargs):
+        if len(cmd_in_dice) == 0:
             cmd_in_dice = [cmd]
         if sub_commands is None:
             sub_commands = []
+        if help_short_async_factory is None:
+            help_short_async_factory = help_async_factory
+        if help_long_async_factory is None:
+            help_long_async_factory = help_async_factory            
         self.cmd = cmd
         self.cmd_in_dice = cmd_in_dice
         self.help_short = help_short
         self.help_long = help_long
-        self.help_async_factory = help_async_factory
+        self.help_short_async_factory = help_short_async_factory
+        self.help_long_async_factory = help_long_async_factory
         self.sub_commands = sub_commands
         self.priority = priority
         self.extra_kwargs = kwargs
