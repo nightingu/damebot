@@ -139,22 +139,48 @@ class CommandBuilder:
         self.priority = priority
         self.extra_kwargs = extra_kwargs
 
-    def build(self) -> Matcher:
+    def build_help(self, *help_prefixes, priority=None, recursive=True, **help_args):
+        if prioirty is None:
+            priority = self.priority // 2
+        if len(help_prefixes) == 0:
+            help_prefixes = ["help"]
         main_command, *aliases = [x + " " for x in self.cmd_in_dice]
         aliases = set(aliases)
-        matcher = on_command(main_command, aliases=aliases, priority=self.priority, **self.extra_kwargs)
-        @matcher.handle()
-        async def cmd_handler(bot: Bot, event: Event, state: T_State, matcher: Matcher):
+        matcher = on_command(main_command, aliases=aliases, priority=priority, **help_args)
+        async def help(bot: Bot, event: Event, state: T_State, matcher: Matcher):
             # get real command content
             logger.debug(f"event: {event}")
             logger.debug(f"state: {state}")
             command_text = event.get_message().extract_plain_text().strip()
             logger.debug(f"got command text '{command_text}'")
-            cmd = " ".join([self.cmd, command_text])
-            output = await execute(cmd)
-            await matcher.send(output)
-        matcher.command_builder = self
-        return matcher
+            # TODO: add help command execute (using helper factory).
+        
+
+    def build(self, build_sub=True, recursive=False) -> Matcher:
+        if recursive:
+            build_sub = True
+        matcher = None
+        if self.cmd is not None:
+            main_command, *aliases = [x + " " for x in self.cmd_in_dice]
+            aliases = set(aliases)
+            matcher = on_command(main_command, aliases=aliases, priority=self.priority, **self.extra_kwargs)
+            @matcher.handle()
+            async def cmd_handler(bot: Bot, event: Event, state: T_State, matcher: Matcher):
+                # get real command content
+                logger.debug(f"event: {event}")
+                logger.debug(f"state: {state}")
+                command_text = event.get_message().extract_plain_text().strip()
+                logger.debug(f"got command text '{command_text}'")
+                cmd = " ".join([self.cmd, command_text])
+                output = await execute(cmd)
+                await matcher.send(output)
+            matcher.command_builder = self
+        matcher_subs = [x.build(build_sub=recursive, recursive=recursive) for x in self.sub_commands] if build_sub else None
+        for item in [matcher, matcher_subs]:
+            if item is not None:
+                return item
+
+        
 
 
 
