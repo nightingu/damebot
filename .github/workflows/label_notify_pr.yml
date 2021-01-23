@@ -52,4 +52,4 @@ jobs:
       env:
         GROUPNO: ${{ secrets.NOTIFY_GROUP_ID }}
         MSG: ${{ format('{0} proposed new things #{1} >> {2}', fromJSON(steps.get_latest_pr.outputs.data).repository.pullRequests.nodes[0].author.login,fromJSON(steps.get_latest_pr.outputs.data).repository.pullRequests.nodes[0].number,fromJSON(steps.get_latest_pr.outputs.data).repository.pullRequests.nodes[0].title) }}
-
+ 
