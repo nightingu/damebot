@@ -120,6 +120,7 @@ class CommandBuilder:
                         sub_dict_commands.append(CommandBuilder(*args, **kwargs))
                     sub_command = sub_dict_commands
                 new_sub_commands.append(sub_command)
+            sub_commands = new_sub_commands
         if len(cmd_in_dice) == 0:
             cmd_in_dice = [cmd]
         if help_async_factory is None:
