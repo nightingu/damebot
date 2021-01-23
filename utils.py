@@ -140,6 +140,7 @@ class CommandBuilder:
         self.extra_kwargs = extra_kwargs
 
     def build_help(self, *help_prefixes, priority=None, recursive=True, **help_args):
+        logger.info(f"building help for '{self.cmd}'")
         if priority is None:
             priority = self.priority // 2
         if len(help_prefixes) == 0:
@@ -150,6 +151,7 @@ class CommandBuilder:
         sub_matchers = None
         if recursive:
             sub_matchers = [child_cmd.build_help(*help_prefixes, priority=priority, recursive=recursive, **help_args) for child_cmd in self.sub_commands]        
+        logger.info(f"building command help matcher with '{main_command}'({aliases}), prior={priority}, kwargs={help_args}")
         matcher = on_command(main_command, aliases=aliases, priority=priority, **help_args)
         @matcher.handle()
         async def help(bot: Bot, event: Event, state: T_State, matcher: Matcher):
@@ -183,10 +185,11 @@ f{newline.join(f'{k}:{v.strip()}' for k,v in zip(
 ).strip()}
 """.strip()
             matcher.send(output)
+        logger.info(f"builded help '{self.cmd}'")
         return (matcher, sub_matchers) if sub_matchers else matcher     
 
     def build(self, build_sub=True, recursive=False) -> Matcher:
-        logger.info(f"building {self.cmd}")
+        logger.info(f"building '{self.cmd}'")
         if recursive:
             build_sub = True
         matcher = None
@@ -194,6 +197,7 @@ f{newline.join(f'{k}:{v.strip()}' for k,v in zip(
             main_command, *aliases = [x + " " for x in self.cmd_in_dice]
             aliases = set(aliases)
             matcher = on_command(main_command, aliases=aliases, priority=self.priority, **self.extra_kwargs)
+            logger.info(f"building command matcher with '{main_command}'({aliases}), prior={self.priority}, kwargs={self.extra_kwargs}")
             @matcher.handle()
             async def cmd_handler(bot: Bot, event: Event, state: T_State, matcher: Matcher):
                 # get real command content
@@ -209,8 +213,8 @@ f{newline.join(f'{k}:{v.strip()}' for k,v in zip(
         for item in [matcher, matcher_subs]:
             if item is not None:
                 return item
+        logger.info(f"builded '{self.cmd}'")
 
-        
 
 
 

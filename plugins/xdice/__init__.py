@@ -16,7 +16,7 @@ from collections import namedtuple
 nonebot.get_driver()
 
 root = CommandBuilder(
-    "", 
+    None, 
     help_long_text="""
 damebot help: if you see ダメ/駄目, there must be something wrong.
 """,
@@ -29,7 +29,7 @@ damebot help: if you see ダメ/駄目, there must be something wrong.
     ]
 )
 root.build()
-root.build_help()
+root.build_help("h", "help")
 
 # async def identity(x):
 #     return x
