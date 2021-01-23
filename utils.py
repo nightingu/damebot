@@ -177,7 +177,6 @@ class CommandBuilder:
             command_without_help = origin_command.split()[-1]
             logger.debug(f"{command_without_help} => {self.cmd}")
             logger.debug(f"planning to call with '{self.cmd}', '{command_text}', '{self.help_long}'")
-            # TODO: add help command execute (using helper factory).
             help_long_text = await self.help_long_async_factory(self.cmd, command_text, self.help_long)
             
             sub_commands_texts = await asyncio.gather(*[command.help_short_async_factory(command.cmd, command_text, command.help_short) for command in self.sub_commands])
