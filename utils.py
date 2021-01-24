@@ -65,9 +65,10 @@ def as_script(cmd_script: str, bash_cache="cache", cwd="/workspace"):
     return f"{full_path}"
 
 async def execute(cmd, cwd="/workspace"):
-    logger.info(f"trying to execute '{cmd}'")
+    splited = shlex.split(cmd)
+    logger.info(f"trying to execute {splited}")
     proc = await asyncio.create_subprocess_exec(
-        *shlex.split(cmd),
+        *splited,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         cwd=cwd,
@@ -219,16 +220,20 @@ sub-commands:
             build_sub = True
         matcher = None
         if self.cmd is not None:
-            main_command, *aliases = [x + " " for x in self.cmd_in_dice]
-            aliases = set(aliases)
-            matcher = on_command(main_command, aliases=aliases, priority=self.priority, **self.extra_kwargs)
-            logger.info(f"building command matcher with '{main_command}'({aliases}), prior={self.priority}, kwargs={self.extra_kwargs}")
+            config = nonebot.get_driver().config
+            command_start = config.command_start
+            regex = f"^({'|'.join(command_start)})({'|'.join(self.cmd_in_dice)})(.*)$"
+            matcher = on_regex(regex, flags=re.MULTILINE, block=True, priority=self.priority, **self.extra_kwargs)
+            logger.info(f"building command matcher with '{regex}', prior={self.priority}, kwargs={self.extra_kwargs}")
             @matcher.handle()
             async def cmd_handler(bot: Bot, event: Event, state: T_State, matcher: Matcher):
                 # get real command content
                 logger.debug(f"event: {event}")
                 logger.debug(f"state: {state}")
-                command_text = event.get_message().extract_plain_text().strip()
+                msg = event.get_message().extract_plain_text()
+                logger.debug(f"got message '{msg}'")
+                _, origin_command, command_text = re.match(regex, msg, flags=re.MULTILINE | re.DOTALL).groups()
+                command_text = command_text.strip()
                 logger.debug(f"got command text '{command_text}'")
                 cmd = " ".join([self.cmd, command_text])
                 output = await execute(cmd)
