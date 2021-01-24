@@ -174,7 +174,7 @@ class CommandBuilder:
         command_start = config.command_start
         regex = f"^({'|'.join(command_start)})({'|'.join(all_commands_combined)})(.*)$"
         logger.info(f"building command help matcher with {regex}, prior={priority}, kwargs={help_args}")
-        matcher = on_regex(regex, block=True, priority=priority, **help_args)
+        matcher = on_regex(regex, flags=re.MULTILINE, block=True, priority=priority, **help_args)
         @matcher.handle()
         async def help(bot: Bot, event: Event, state: T_State, matcher: Matcher):
             # get real command content
@@ -182,7 +182,7 @@ class CommandBuilder:
             logger.debug(f"state: {state}")
             msg = event.get_message().extract_plain_text()
             logger.debug(f"got message '{msg}'")
-            _, origin_command, command_text = re.match(regex, msg).groups()
+            _, origin_command, command_text = re.match(regex, msg, flags=re.MULTILINE).groups()
             logger.debug(f"got command text '{command_text}'")
             extra_prompt = ""
             if not command_text.startswith(" ") and command_text != "":
