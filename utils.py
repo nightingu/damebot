@@ -6,8 +6,11 @@ from nonebot.typing import T_State
 import asyncio
 from nonebot.log import logger
 from random import choice, randint
+import os
 import re
 import shlex
+import hashlib
+
 
 def start_end_alternative(first_start=True):
     if first_start:
@@ -52,6 +55,15 @@ async def summary(s: str, limit=50, keep_first=True, fill_in_gen=fill_in_generat
     else:
         return s
     
+def as_script(cmd_script: str, bash_cache="cache", cwd="/workspace"):
+    md5 = hashlib.md5(cmd_script.encode("utf-8"))
+    os.makedirs(os.path.join(cwd, bash_cache), exist_ok=True)
+    full_path = os.path.join(cwd, bash_cache, f"{md5.hexdigest()}.sh")
+    with open(full_path, "w", encoding="utf-8") as f:
+        f.write(cmd_script)
+    os.system(f"chmod 700 {full_path}")
+    return f"{full_path}"
+
 async def execute(cmd, cwd="/workspace"):
     logger.info(f"trying to execute '{cmd}'")
     proc = await asyncio.create_subprocess_exec(
