@@ -26,6 +26,8 @@ help|h: damebot! if you see ダメ/駄目, there must be something wrong.
             "r", "d", "roll",
             help_short="--version d",
         ),
+        CommandBuilder("ls"),
+        CommandBuilder("pwd"),
     ]
 )
 root.build()

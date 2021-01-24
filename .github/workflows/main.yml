@@ -77,6 +77,7 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           port: 22
           script: |
+            mkdir --parents damebot_workspace
             cd app-damebot
             docker-compose up -d --build
             sleep 5

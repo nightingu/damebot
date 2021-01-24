@@ -52,12 +52,13 @@ async def summary(s: str, limit=50, keep_first=True, fill_in_gen=fill_in_generat
     else:
         return s
     
-async def execute(cmd):
+async def execute(cmd, cwd="/workspace"):
     logger.info(f"trying to execute '{cmd}'")
     proc = await asyncio.create_subprocess_exec(
         *shlex.split(cmd),
         stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE
+        stderr=asyncio.subprocess.PIPE,
+        cwd=cwd,
     )
     logger.debug(f"'{cmd}' process created.")
     stdout, stderr = await proc.communicate()
@@ -102,27 +103,27 @@ class CommandBuilder:
         _kwargs.update(_locals[_spec.varkw])
         if sub_commands is None:
             sub_commands = []
-        else:
-            if isinstance(sub_commands, (str, CommandBuilder, dict)):
-                sub_commands = [sub_commands]
-            new_sub_commands = []
-            for sub_command in sub_commands:
-                if isinstance(sub_command, str):
-                    sub = sub_command
-                    args = [" ".join([x, sub]) for x in _args]
-                    kwargs = _kwargs.copy()
-                    kwargs["sub_commands"] = None
-                    sub_command = CommandBuilder(*args, **kwargs)
-                elif isinstance(sub_command, dict):
-                    sub_dict_commands = []
-                    for sub, subsub in sub_command.items():
-                        args = [" ".join([x, sub_command]) for x in _args]
-                        kwargs = _kwargs.copy()
-                        kwargs["sub_commands"] = subsub
-                        sub_dict_commands.append(CommandBuilder(*args, **kwargs))
-                    sub_command = sub_dict_commands
-                new_sub_commands.append(sub_command)
-            sub_commands = new_sub_commands
+        # else:
+        #     if isinstance(sub_commands, (str, CommandBuilder, dict)):
+        #         sub_commands = [sub_commands]
+        #     new_sub_commands = []
+        #     for sub_command in sub_commands:
+        #         if isinstance(sub_command, str):
+        #             sub = sub_command
+        #             args = [" ".join([x, sub]) for x in _args]
+        #             kwargs = _kwargs.copy()
+        #             kwargs["sub_commands"] = None
+        #             sub_command = CommandBuilder(*args, **kwargs)
+        #         elif isinstance(sub_command, dict):
+        #             sub_dict_commands = []
+        #             for sub, subsub in sub_command.items():
+        #                 args = [" ".join([x, sub_command]) for x in _args]
+        #                 kwargs = _kwargs.copy()
+        #                 kwargs["sub_commands"] = subsub
+        #                 sub_dict_commands.append(CommandBuilder(*args, **kwargs))
+        #             sub_command = sub_dict_commands
+        #         new_sub_commands.append(sub_command)
+        #     sub_commands = new_sub_commands
         if len(cmd_in_dice) == 0:
             cmd_in_dice = [cmd]
         if help_async_factory is None:
