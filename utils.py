@@ -10,6 +10,8 @@ import os
 import re
 import shlex
 import hashlib
+import grp
+import pwd
 
 
 def start_end_alternative(first_start=True):
@@ -64,7 +66,45 @@ def as_script(cmd_script: str, bash_cache="cache", cwd="/workspace"):
     os.system(f"chmod 700 {full_path}")
     return f"{full_path}"
 
-async def execute(cmd, cwd="/workspace"):
+async def execute_shell(cmd, cwd="/workspace"):
+    proc = await asyncio.create_subprocess_shell(
+        cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        cwd=cwd,
+    )
+    stdout, stderr = await proc.communicate()
+    return proc.returncode, stdout, stderr
+
+async def ensure_group(group_name="damebot"):
+    code, out, err = await execute_shell(f"groupadd {group_name}")
+    success = code == 0 or code == 9
+    logger.debug(f"groupadd: {out, err}")
+    if not success:
+        logger.error(f"groupadd failed. {out, err}")
+    return success
+    # command = f'cat /etc/group | sed "s/:.*//" | grep {group_name}'
+
+async def ensure_user(user_name, group_name="damebot"):
+    logger.debug(f"ensuring user {user_name} and group {group_name} exists.")
+    group_exist = await ensure_group(group_name)
+    code, out, err = await execute_shell(f"useradd {user_name} -G {group_name}")
+    logger.debug(f"useradd: {out, err}")
+    success = group_exist and (code == 0 or code == 9)
+    if not success:
+        logger.error(f"useradd failed. {out, err}")
+    return success
+
+
+def set_ids(user_name):
+    def _set_id():
+        user = pwd.getpwnam(user_name)
+        os.setgid(user.pw_gid)
+        os.setuid(user.pw_uid)
+    return _set_id
+
+async def execute(cmd, cwd="/workspace", user="commander"):
+    result = await ensure_user(user)
     splited = shlex.split(cmd)
     logger.info(f"trying to execute {splited}")
     proc = await asyncio.create_subprocess_exec(
@@ -72,6 +112,7 @@ async def execute(cmd, cwd="/workspace"):
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         cwd=cwd,
+        preexec_fn=set_ids(user)
     )
     logger.debug(f"'{cmd}' process created.")
     stdout, stderr = await proc.communicate()
