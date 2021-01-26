@@ -12,6 +12,7 @@ import shlex
 import hashlib
 import grp
 import pwd
+from uid_gid import ensure_user
 
 
 def start_end_alternative(first_start=True):
@@ -63,38 +64,8 @@ def as_script(cmd_script: str, bash_cache="cache", cwd="/workspace"):
     full_path = os.path.join(cwd, bash_cache, f"{md5.hexdigest()}.sh")
     with open(full_path, "w", encoding="utf-8") as f:
         f.write(cmd_script)
-    os.system(f"chmod 700 {full_path}")
+    os.system(f"chmod 755 {full_path}")
     return f"{full_path}"
-
-async def execute_shell(cmd, cwd="/workspace"):
-    proc = await asyncio.create_subprocess_shell(
-        cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        cwd=cwd,
-    )
-    stdout, stderr = await proc.communicate()
-    return proc.returncode, stdout, stderr
-
-async def ensure_group(group_name="damebot"):
-    code, out, err = await execute_shell(f"groupadd {group_name}")
-    success = code == 0 or code == 9
-    logger.debug(f"groupadd: {out, err}")
-    if not success:
-        logger.error(f"groupadd failed. {out, err}")
-    return success
-    # command = f'cat /etc/group | sed "s/:.*//" | grep {group_name}'
-
-async def ensure_user(user_name, group_name="damebot"):
-    logger.debug(f"ensuring user {user_name} and group {group_name} exists.")
-    group_exist = await ensure_group(group_name)
-    code, out, err = await execute_shell(f"useradd {user_name} -G {group_name}")
-    logger.debug(f"useradd: {out, err}")
-    success = group_exist and (code == 0 or code == 9)
-    if not success:
-        logger.error(f"useradd failed. {out, err}")
-    return success
-
 
 def set_ids(user_name):
     def _set_id():
