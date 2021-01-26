@@ -30,7 +30,7 @@ def ensure_group_sync(group_name="damebot"):
     code = os.system(cmd)
     success = code == 0 or code == 9
     if not success:
-        logger.error(f"groupadd failed. {out, err}")
+        logger.error(f"groupadd failed. ")
     else:
         gid_map[group_name] = grp.getgrnam(group_name).gr_gid
         gid_map.sync()
