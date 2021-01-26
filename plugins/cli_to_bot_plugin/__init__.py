@@ -30,7 +30,7 @@ help|h: damebot! if you see ダメ/駄目, there must be something wrong.
         CommandBuilder("pwd", help_short_text="Linux命令 pwd"),
         CommandBuilder("cat", help_short_text="Linux命令 cat"),
         CommandBuilder("base64", help_short_text="Linux命令 base64"),
-        CommandBuilder(as_script('echo "$2" > $1'), "write", help_short_text="write files like 'echo $2 > $1'. ", help_long_text="Usage: write <file_name> 'text'"),
+        CommandBuilder(as_script('echo "$2" > $1'), "write", run_as="dameuser", help_short_text="write files like 'echo $2 > $1'. ", help_long_text="Usage: write <file_name> 'text'"),
         CommandBuilder("sed", help_short_text="Linux命令 sed"),
         CommandBuilder("whoami", help_short_text="Linux命令 whoami"),
     ]

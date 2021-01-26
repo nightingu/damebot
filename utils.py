@@ -111,6 +111,7 @@ class CommandBuilder:
     def __init__(
         self, cmd, 
         *cmd_in_dice, 
+        run_as="user",
         help_short="--version", 
         help_short_text=None, 
         help_long="--help", 
@@ -162,6 +163,7 @@ class CommandBuilder:
         if help_long_text is not None:
             help_long = help_long_text
         self.cmd = cmd
+        self.run_as = run_as
         self.cmd_in_dice = cmd_in_dice
         self.help_short = help_short
         self.help_long = help_long
@@ -216,8 +218,9 @@ f"""
 {extra_prompt}{help_long_text.strip()}
 
 sub-commands:
-{newline.join(f'{k}:{v.strip()}' for k,v in zip(
+{newline.join(f'{k}[{u}]:{v.strip()}' for k,u,v in zip(
     ('|'.join(comm.cmd_in_dice) for comm in self.sub_commands), 
+    (f'{comm.run_as}' for comm in self.sub_commands), 
     sub_commands_texts
     )
 ).strip()}
@@ -248,7 +251,7 @@ sub-commands:
                 command_text = command_text.strip()
                 logger.debug(f"got command text '{command_text}'")
                 cmd = " ".join([self.cmd, command_text])
-                output = await execute(cmd)
+                output = await execute(cmd, user=self.run_as)
                 await matcher.send(output)
             matcher.command_builder = self
         matcher_subs = [x.build(build_sub=recursive, recursive=recursive) for x in self.sub_commands] if build_sub else None
