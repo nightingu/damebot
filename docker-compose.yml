@@ -1,7 +1,7 @@
 version: '3'
 services:
-  web:
-    network_mode: host
+  damebot:
+    network_mode: bridge
     build: .
     ports:
       - "8081:8081"
