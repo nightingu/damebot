@@ -18,7 +18,7 @@ nonebot.get_driver()
 root = CommandBuilder(
     None, 
     help_long_text="""
-help|h: damebot! if you see ダメ/駄目, there must be something wrong.
+help|h: damebot! if you see だめ/ダメ/駄目, there must be something wrong.
 """,
     sub_commands=[
         CommandBuilder(

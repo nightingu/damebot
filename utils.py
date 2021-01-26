@@ -27,7 +27,7 @@ def fill_in_generate():
     return "\n" + choice(["いぉ","など"]) * randint(2,3) + "." * randint(3,6) + "\n"
 
 def dame(err: str):
-    return f"""{choice(['ダメ', '駄目'])}{choice(['です', ''])}{"！" * randint(0,5)}
+    return f"""{choice(['だめ', 'ダメ', '駄目'])}{choice(['です', ''])}{"！" * randint(0,5)}
   {err}      
 """.strip()
 
@@ -92,6 +92,10 @@ async def execute(cmd, cwd="/workspace", user="commander"):
     if proc.returncode == 0:
     # also can use proc.returncode
         output = stdout.decode()
+        if output.strip() == "":
+            output = stderr.decode()
+            if output.strip() == "":
+                output = f"'{cmd}' できだ" + "！" * randint(1,3)
     else:
         err_short = await summary(stderr.decode())
         output = dame(err_short)
