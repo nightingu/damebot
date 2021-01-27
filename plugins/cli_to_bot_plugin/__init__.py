@@ -26,13 +26,8 @@ help|h: damebot! if you see だめ/ダメ/駄目, there must be something wrong.
             "r", "d", "roll",
             help_short="--version d",
         ),
-        CommandBuilder("ls", help_short_text="Linux命令 ls"),
-        CommandBuilder("pwd", help_short_text="Linux命令 pwd"),
-        CommandBuilder("cat", help_short_text="Linux命令 cat"),
-        CommandBuilder("base64", help_short_text="Linux命令 base64"),
-        CommandBuilder(as_script('echo "$2" > $1'), "write", run_as="dameuser", help_short_text="write files like 'echo $2 > $1'. ", help_long_text="Usage: write <file_name> 'text'"),
-        CommandBuilder("sed", help_short_text="Linux命令 sed"),
-        CommandBuilder("whoami", help_short_text="Linux命令 whoami"),
+        CommandBuilder(script("scripts/write.sh"), "write", run_as="dameuser", help_short_text="write files like 'echo $2 > $1'. ", help_long_text="Usage: write <file_name> 'text'"),
+        CommandBuilder(script("scripts/no_bash.py"), "bash", "!", run_as="dameuser", init_fn=None),
     ]
 )
 root.build()

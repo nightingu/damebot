@@ -1,3 +1,4 @@
+import shutil
 from tokenize import group
 from typing import Dict
 import nonebot
@@ -60,12 +61,20 @@ async def summary(s: str, limit=50, keep_first=True, fill_in_gen=fill_in_generat
     else:
         return s
     
-def as_script(cmd_script: str, bash_cache="cache", cwd="/workspace"):
-    md5 = hashlib.md5(cmd_script.encode("utf-8"))
-    os.makedirs(os.path.join(cwd, bash_cache), exist_ok=True)
-    full_path = os.path.join(cwd, bash_cache, f"{md5.hexdigest()}.sh")
-    with open(full_path, "w", encoding="utf-8") as f:
-        f.write(cmd_script)
+# def as_script(cmd_script: str, bash_cache="cache", cwd="/workspace"):
+#     md5 = hashlib.md5(cmd_script.encode("utf-8"))
+#     os.makedirs(os.path.join(cwd, bash_cache), exist_ok=True)
+#     full_path = os.path.join(cwd, bash_cache, f"{md5.hexdigest()}.sh")
+#     with open(full_path, "w", encoding="utf-8") as f:
+#         f.write(cmd_script)
+#     os.system(f"chmod 755 {full_path}")
+#     return f"{full_path}"
+
+def script(cmd: str, bash_cache="cache", cwd="/workspace"):
+    target_path = os.path.join(cwd, bash_cache)
+    _, file_name = os.path.split(cmd)
+    full_path = os.path.join(cwd, bash_cache, file_name)
+    shutil.copy(cmd, full_path)
     os.system(f"chmod 755 {full_path}")
     return f"{full_path}"
 
@@ -115,7 +124,9 @@ async def plain_string(cmd, user_typed_cmd, help_obj):
     logger.debug("using plain_string help producer")
     return help_obj
 
-import inspect
+def nop():
+    pass
+
 class CommandBuilder:
     def __init__(
         self, cmd, 
@@ -130,35 +141,10 @@ class CommandBuilder:
         help_long_async_factory=None, 
         sub_commands=None, 
         priority=65536, 
+        init_fn=None,
         **extra_kwargs):
-        _locals = locals()
-        _spec = inspect.getfullargspec(self.__init__)
-        _args = [_locals[x] for x in _spec.args] + list(_locals[_spec.varargs])
-        _kwargs = {x:_locals[x] for x in _spec.kwonlyargs}
-        _kwargs.update(_locals[_spec.varkw])
         if sub_commands is None:
             sub_commands = []
-        # else:
-        #     if isinstance(sub_commands, (str, CommandBuilder, dict)):
-        #         sub_commands = [sub_commands]
-        #     new_sub_commands = []
-        #     for sub_command in sub_commands:
-        #         if isinstance(sub_command, str):
-        #             sub = sub_command
-        #             args = [" ".join([x, sub]) for x in _args]
-        #             kwargs = _kwargs.copy()
-        #             kwargs["sub_commands"] = None
-        #             sub_command = CommandBuilder(*args, **kwargs)
-        #         elif isinstance(sub_command, dict):
-        #             sub_dict_commands = []
-        #             for sub, subsub in sub_command.items():
-        #                 args = [" ".join([x, sub_command]) for x in _args]
-        #                 kwargs = _kwargs.copy()
-        #                 kwargs["sub_commands"] = subsub
-        #                 sub_dict_commands.append(CommandBuilder(*args, **kwargs))
-        #             sub_command = sub_dict_commands
-        #         new_sub_commands.append(sub_command)
-        #     sub_commands = new_sub_commands
         if len(cmd_in_dice) == 0:
             cmd_in_dice = [cmd]
         if help_async_factory is None:
@@ -171,7 +157,10 @@ class CommandBuilder:
             help_short = help_short_text
         if help_long_text is not None:
             help_long = help_long_text
+        if init_fn is None:
+            init_fn = nop
         self.cmd = cmd
+        self.init_fn = init_fn
         self.run_as = run_as
         self.cmd_in_dice = cmd_in_dice
         self.help_short = help_short
@@ -239,6 +228,7 @@ sub-commands:
         return (matcher, sub_matchers) if sub_matchers else matcher     
 
     def build(self, build_sub=True, recursive=False) -> Matcher:
+        self.init_fn()
         logger.info(f"building '{self.cmd}'")
         if recursive:
             build_sub = True
