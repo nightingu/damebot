@@ -127,6 +127,7 @@ async def plain_string(cmd, user_typed_cmd, help_obj):
 async def command_env_settings(bot: Bot, event: Event, state: T_State, matcher: Matcher):
     env_vars = os.environ.copy()
     env_vars["BOT_EVENT_TYPE"] = str(event.get_type())
+    env_vars["BOT_EVENT_MESSAGE"] = str(event.get_plaintext())
     group_id = getattr(event, "group_id", None)
     if group_id is not None:
         env_vars["BOT_GROUP_ID"] = str(group_id)

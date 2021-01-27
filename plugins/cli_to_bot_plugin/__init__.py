@@ -10,10 +10,27 @@ import re
 import shlex
 from utils import *
 from collections import namedtuple
-
-
+import pathlib
 
 nonebot.get_driver()
+
+async def download_env(bot: Bot, event: Event, state: T_State, matcher: Matcher):
+    envs = await command_env_settings(bot, event, state, matcher)
+    if "BOT_GROUP_ID" not in envs:
+        raise ValueError(f"not in group, no group files found")
+    group_id = int(envs["BOT_GROUP_ID"])
+    file_name = event.get_plaintext().strip()
+    file_path = pathlib.Path(file_name)
+    current_files = await bot.call_api("get_group_root_files", group_id=group_id)
+    for folder_path in file_path.parts[:-1]:
+        folders = current_files["folders"]
+        folder_map = {folder["folder_name"]:folder for folder in folders}
+        current_files = await bot.call_api("get_group_files_by_folder", group_id=group_id, folder_id=folder_map[folder_path]["folder_id"])
+    file_map = {file["file_name"]:file for file in current_files["files"]}
+    file_item = file_map[file_path.parts[-1]]
+    file_url = await bot.call_api("get_group_file_url", group_id=group_id, file_id=file_item["file_id"], busid=file_item["busid"])
+    envs["BOT_DOWNLOAD_URL"] = file_url["url"]
+    return envs
 
 root = CommandBuilder(
     None, 
@@ -28,6 +45,7 @@ help|h: damebot! if you see だめ/ダメ/駄目, there must be something wrong.
         ),
         CommandBuilder(script("scripts/write.sh"), "write", run_as="dameuser", help_short_text="write files like 'echo $2 > $1'. ", help_long_text="Usage: write <file_name> 'text'"),
         CommandBuilder(script("scripts/no_bash.py"), "bash", "!", run_as="dameuser", init_fn=None),
+        CommandBuilder(script("scripts/download.sh"), "download", help_short_text="从群文件下载到damebot", help_long_text="Usage: download <group_file_name>", command_env_async_factory=download_env)
     ]
 )
 root.build()
