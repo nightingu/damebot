@@ -1,3 +1,5 @@
+from tokenize import group
+from typing import Dict
 import nonebot
 from nonebot import on_command, on_regex
 from nonebot.adapters import Bot, Event
@@ -74,7 +76,9 @@ def set_ids(user_name):
         os.setuid(user.pw_uid)
     return _set_id
 
-async def execute(cmd, cwd="/workspace", user="commander"):
+async def execute(cmd, cwd="/workspace", user="commander", env_vars=None):
+    if env_vars is None:
+        env_vars = {}
     result = await ensure_user(user)
     splited = shlex.split(cmd)
     logger.info(f"trying to execute {splited}")
@@ -83,7 +87,8 @@ async def execute(cmd, cwd="/workspace", user="commander"):
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         cwd=cwd,
-        preexec_fn=set_ids(user)
+        preexec_fn=set_ids(user),
+        env=env_vars,
     )
     logger.debug(f"'{cmd}' process created.")
     stdout, stderr = await proc.communicate()
@@ -255,7 +260,16 @@ sub-commands:
                 command_text = command_text.strip()
                 logger.debug(f"got command text '{command_text}'")
                 cmd = " ".join([self.cmd, command_text])
-                output = await execute(cmd, user=self.run_as)
+                env_vars = os.environ.copy()
+                env_vars["BOT_EVENT_TYPE"] = event.get_type()
+                group_id = getattr(event, "group_id", None)
+                if group_id is not None:
+                    env_vars["BOT_GROUP_ID"] = group_id
+                env_vars["BOT_USER_ID"] = event.get_user_id()
+                env_vars["BOT_SESSION_ID"] = event.get_session_id()
+                if event.is_tome():
+                    env_vars["TO_BOT"] = 1
+                output = await execute(cmd, user=self.run_as, env_vars=env_vars)
                 await matcher.send(output)
             matcher.command_builder = self
         matcher_subs = [x.build(build_sub=recursive, recursive=recursive) for x in self.sub_commands] if build_sub else None
