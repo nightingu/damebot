@@ -15,7 +15,7 @@ import shlex
 import hashlib
 import grp
 import pwd
-from uid_gid import ensure_user
+from uid_gid import ensure_user, ensure_user_dir
 from workspace import *
 
 
@@ -78,6 +78,7 @@ def set_ids(user_name):
 async def execute(cmd, cwd=SHARED, user="commander", env_vars=None):
     if env_vars is None:
         env_vars = {}
+    os.makedirs(cwd, exist_ok=True)
     result = await ensure_user(user)
     splited = shlex.split(cmd)
     logger.info(f"trying to execute {splited}")
@@ -147,6 +148,8 @@ class CommandBuilder:
         help_short_async_factory=None, 
         help_long_async_factory=None, 
         sub_commands=None, 
+        per_group=False,
+        private_workspace=True,
         priority=65536, 
         priority_delta=0,
         help_priority=65536 // 2, 
@@ -183,6 +186,8 @@ class CommandBuilder:
         self.help_priority = help_priority + help_priority_delta
         self.extra_kwargs = extra_kwargs
         self.command_env_async_factory = command_env_async_factory
+        self.per_group = per_group
+        self.private_workspace = private_workspace
 
     def build_help(self, *help_prefixes, priority_delta=0, recursive=True, **help_args):
         logger.info(f"building help for '{self.cmd}' using '{self.help_short_async_factory.__name__}:{self.help_short}' and '{self.help_long_async_factory.__name__}:{self.help_long}'")
@@ -261,13 +266,28 @@ sub-commands:
                 _, origin_command, command_text = re.match(regex, msg, flags=re.MULTILINE | re.DOTALL).groups()
                 command_text = command_text.strip()
                 logger.debug(f"got command text '{command_text}'")
+                group_id = None
+                if self.per_group:
+                    group_id = getattr(event, "group_id", None)
+                    if group_id is None:
+                        return
+                cwd = GROUP/str(group_id) if self.per_group else SHARED
+                os.makedirs(cwd, exist_ok=True)
+                if self.private_workspace:
+                    cwd = cwd / self.cmd_in_dice[0]
+                    ensure_user_dir(cwd, self.run_as)
                 cmd = " ".join([self.cmd, command_text])
                 env_futures = await asyncio.gather(self.command_env_async_factory(bot, event, state, matcher, regex), return_exceptions=True)
                 env_vars = env_futures[0]
                 if isinstance(env_vars, Exception):
                     await matcher.send(dame(str(env_vars)))
                     raise env_vars
-                output = await execute(cmd, user=self.run_as, env_vars=env_vars)
+                output = await execute(
+                    cmd, 
+                    cwd=cwd,
+                    user=self.run_as, 
+                    env_vars=env_vars
+                )
                 await matcher.send(output)
             matcher.command_builder = self
         matcher_subs = [x.build(build_sub=recursive, recursive=recursive) for x in self.sub_commands] if build_sub else None

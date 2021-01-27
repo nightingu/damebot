@@ -69,8 +69,19 @@ async def ensure_user(user_name, group_name="damebot"):
         uid_map.sync()
     return success
 
+default_group = "damebot"
+
+def ensure_shared_dir(path: Path): 
+    os.makedirs(path, exist_ok=True)
+    os.system(f"chgrp {default_group} {path}")
+    os.system(f"chmod g+w {path}")
+    os.system(f"chmod +t {path}") 
+
+def ensure_user_dir(path: Path, user: str): 
+    os.makedirs(path, exist_ok=True)
+    os.system(f"chown {user}")
+
 def init_workspace():
-    default_group = "damebot"
     ensure_group_sync(default_group)
     for item in workspace.__dict__.values():
         if isinstance(item, Path):
@@ -78,9 +89,6 @@ def init_workspace():
             os.system(f"chmod 755 {item}")
             os.system(f"chgrp root {item}")
             os.system(f"chown root {item}")
-    os.system(f"chgrp {default_group} {SHARED}")
-    os.system(f"chmod g+w {SHARED}")
-    os.system(f"chmod +t {SHARED}") 
-    
+    ensure_shared_dir(SHARED)    
 
 init_workspace()
