@@ -269,7 +269,7 @@ sub-commands:
                 command_text = command_text.strip()
                 logger.debug(f"got command text '{command_text}'")
                 cmd = " ".join([self.cmd, command_text])
-                env_vars = await self.command_env_async_factory(bot, event, state, matcher)
+                env_vars = await self.command_env_async_factory(bot, event, state, matcher, regex)
                 output = await execute(cmd, user=self.run_as, env_vars=env_vars)
                 await matcher.send(output)
             matcher.command_builder = self
