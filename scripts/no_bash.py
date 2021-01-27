@@ -37,7 +37,7 @@ if __name__ == '__main__':
         if cmd[0] in WHITELIST:
             exit(subprocess.call(cmd))
         else:
-            print(f"{cmd} not in the white-list")
+            print(f"{cmd} not in the white-list {','.join(WHITELIST)}")
             exit(1)
     elif arguments["--whitelist"]:
         print(f"You can use {','.join(WHITELIST)}")
