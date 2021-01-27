@@ -15,7 +15,7 @@ import pathlib
 nonebot.get_driver()
 
 async def download_env(bot: Bot, event: Event, state: T_State, matcher: Matcher, regex: str):
-    envs = await command_env_settings(bot, event, state, matcher)
+    envs = await command_env_settings(bot, event, state, matcher, regex)
     if "BOT_GROUP_ID" not in envs:
         raise ValueError(f"not in group, no group files found")
     group_id = int(envs["BOT_GROUP_ID"])
