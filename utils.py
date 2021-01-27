@@ -124,6 +124,18 @@ async def plain_string(cmd, user_typed_cmd, help_obj):
     logger.debug("using plain_string help producer")
     return help_obj
 
+async def command_env_settings(bot: Bot, event: Event, state: T_State, matcher: Matcher):
+    env_vars = os.environ.copy()
+    env_vars["BOT_EVENT_TYPE"] = str(event.get_type())
+    group_id = getattr(event, "group_id", None)
+    if group_id is not None:
+        env_vars["BOT_GROUP_ID"] = str(group_id)
+    env_vars["BOT_USER_ID"] = str(event.get_user_id())
+    env_vars["BOT_SESSION_ID"] = str(event.get_session_id())
+    if event.is_tome():
+        env_vars["TO_BOT"] = str(1)
+    return env_vars
+
 def nop():
     pass
 
@@ -142,7 +154,7 @@ class CommandBuilder:
         sub_commands=None, 
         priority=65536, 
         init_fn=None,
-        extra_command_env_async=None,
+        command_env_async_factory=command_env_settings,
         **extra_kwargs):
         if sub_commands is None:
             sub_commands = []
@@ -171,6 +183,7 @@ class CommandBuilder:
         self.sub_commands = sub_commands
         self.priority = priority
         self.extra_kwargs = extra_kwargs
+        self.command_env_async_factory = command_env_async_factory
 
     def build_help(self, *help_prefixes, priority=None, recursive=True, **help_args):
         logger.info(f"building help for '{self.cmd}' using '{self.help_short_async_factory.__name__}:{self.help_short}' and '{self.help_long_async_factory.__name__}:{self.help_long}'")
@@ -251,15 +264,7 @@ sub-commands:
                 command_text = command_text.strip()
                 logger.debug(f"got command text '{command_text}'")
                 cmd = " ".join([self.cmd, command_text])
-                env_vars = os.environ.copy()
-                env_vars["BOT_EVENT_TYPE"] = str(event.get_type())
-                group_id = getattr(event, "group_id", None)
-                if group_id is not None:
-                    env_vars["BOT_GROUP_ID"] = str(group_id)
-                env_vars["BOT_USER_ID"] = str(event.get_user_id())
-                env_vars["BOT_SESSION_ID"] = str(event.get_session_id())
-                if event.is_tome():
-                    env_vars["TO_BOT"] = str(1)
+                env_vars = await self.command_env_async_factory(bot, event, state, matcher)
                 output = await execute(cmd, user=self.run_as, env_vars=env_vars)
                 await matcher.send(output)
             matcher.command_builder = self
