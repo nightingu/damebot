@@ -24,7 +24,8 @@ WHITELIST = [
     "ls","pwd","whoami",
     "printenv",
     "mv","cp","ln",
-    "tar","unzip",
+    "touch",
+    "tar","unzip","rm",
     "cat","base64",
     "grep","shuf","head","tail","cut",
 ]
@@ -34,12 +35,12 @@ if __name__ == '__main__':
     white_list_set = set(WHITELIST)
     if arguments["<command>"]:
         cmd = [arguments["<command>"]] + arguments["ARGS"]
-        print(f"executing {cmd}", file=sys.stderr)
         if cmd[0] in white_list_set:
+            print(f"executing {cmd}", file=sys.stderr)
             exit(subprocess.call(cmd))
         else:
-            print(f"{cmd} not in the white-list {','.join(WHITELIST)}")
+            print(f"'{cmd[0]}' not in white-list [{' '.join(WHITELIST)}]")
             exit(1)
     elif arguments["--whitelist"]:
-        print(f"You can use {','.join(WHITELIST)}")
+        print(f"You can use [{' '.join(WHITELIST)}]")
         exit(0)

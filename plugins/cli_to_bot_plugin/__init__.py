@@ -9,6 +9,7 @@ from random import choice, randint
 import re
 import shlex
 from utils import *
+from workspace import *
 from collections import namedtuple
 import pathlib
 
@@ -44,20 +45,20 @@ help|h: damebot! if you see だめ/ダメ/駄目, there must be something wrong.
             help_short="--version d",
         ),
         CommandBuilder(
-            script("scripts/write.sh"), 
+            script(PROJECT_SCRIPT / "write.sh"), 
             "write",
-            run_as="dameuser", 
+            # run_as="dameuser", 
             help_short_text="write files like 'echo $2 > $1'. ", 
             help_long_text="Usage: write <file_name> 'text'"
         ),
         CommandBuilder(
-            script("scripts/no_bash.py"),
+            script(PROJECT_SCRIPT / "no_bash.py"),
             "bash", "!",
             run_as="dameuser", 
             init_fn=None
         ),
         CommandBuilder(
-            script("scripts/download.sh"), 
+            script(PROJECT_SCRIPT / "download.sh"), 
             "download",
             priority_delta=-1, 
             help_short_text="从群文件下载到damebot", 

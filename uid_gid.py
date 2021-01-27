@@ -5,10 +5,12 @@ import re
 import grp
 import pwd
 import subprocess
+from workspace import *
+import workspace
 
 from json_store import JSONStore
 
-async def execute_shell(cmd, cwd="/workspace"):
+async def execute_shell(cmd, cwd=WORKSPACE):
     proc = await asyncio.create_subprocess_shell(
         cmd,
         stdout=asyncio.subprocess.PIPE,
@@ -18,10 +20,8 @@ async def execute_shell(cmd, cwd="/workspace"):
     stdout, stderr = await proc.communicate()
     return proc.returncode, stdout, stderr
 
-os.makedirs("/workspace/cache", exist_ok=True)
-
-uid_map = JSONStore("/workspace/cache/uid_map.json", mode=0o644)
-gid_map = JSONStore("/workspace/cache/gid_map.json", mode=0o644)
+uid_map = JSONStore(CACHE / "uid_map.json", mode=0o644)
+gid_map = JSONStore(CACHE / "gid_map.json", mode=0o644)
 
 def ensure_group_sync(group_name="damebot"):
     gid_extra = f" -g {gid_map[group_name]}" if group_name in gid_map else ""
@@ -70,8 +70,17 @@ async def ensure_user(user_name, group_name="damebot"):
     return success
 
 def init_workspace():
-    ensure_group_sync("damebot")
-    os.system("chmod 775 /workspace")
-    os.system("chgrp damebot /workspace")
+    default_group = "damebot"
+    ensure_group_sync(default_group)
+    for item in workspace.__dict__.values():
+        if isinstance(item, Path):
+            os.makedirs(item, exist_ok=True)
+            os.system(f"chmod 755 {item}")
+            os.system(f"chgrp root {item}")
+            os.system(f"chown root {item}")
+    os.system(f"chgrp {default_group} {SHARED}")
+    os.system(f"chmod g+w {SHARED}")
+    os.system(f"chmod +t {SHARED}") 
+    
 
 init_workspace()
