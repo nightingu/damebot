@@ -14,12 +14,12 @@ import pathlib
 
 nonebot.get_driver()
 
-async def download_env(bot: Bot, event: Event, state: T_State, matcher: Matcher):
+async def download_env(bot: Bot, event: Event, state: T_State, matcher: Matcher, regex: str):
     envs = await command_env_settings(bot, event, state, matcher)
     if "BOT_GROUP_ID" not in envs:
         raise ValueError(f"not in group, no group files found")
     group_id = int(envs["BOT_GROUP_ID"])
-    file_name = event.get_plaintext().strip()
+    file_name = envs["BOT_EVENT_COMMAND_ARGS"].strip()
     file_path = pathlib.Path(file_name)
     current_files = await bot.call_api("get_group_root_files", group_id=group_id)
     for folder_path in file_path.parts[:-1]:
