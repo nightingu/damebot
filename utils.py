@@ -158,6 +158,9 @@ class CommandBuilder:
         help_long_async_factory=None, 
         sub_commands=None, 
         priority=65536, 
+        priority_delta=0,
+        help_priority=65536 // 2, 
+        help_priority_delta=0,
         init_fn=None,
         command_env_async_factory=command_env_settings,
         **extra_kwargs):
@@ -186,14 +189,14 @@ class CommandBuilder:
         self.help_short_async_factory = help_short_async_factory
         self.help_long_async_factory = help_long_async_factory
         self.sub_commands = sub_commands
-        self.priority = priority
+        self.priority = priority + priority_delta
+        self.help_priority = help_priority + help_priority_delta
         self.extra_kwargs = extra_kwargs
         self.command_env_async_factory = command_env_async_factory
 
-    def build_help(self, *help_prefixes, priority=None, recursive=True, **help_args):
+    def build_help(self, *help_prefixes, priority_delta=0, recursive=True, **help_args):
         logger.info(f"building help for '{self.cmd}' using '{self.help_short_async_factory.__name__}:{self.help_short}' and '{self.help_long_async_factory.__name__}:{self.help_long}'")
-        if priority is None:
-            priority = self.priority // 2
+        priority = self.help_priority + priority_delta
         if len(help_prefixes) == 0:
             help_prefixes = ["help"]
         all_commands_combined = [help_name + ("" if self.cmd is None else f" {self_name}") for self_name in self.cmd_in_dice for help_name in help_prefixes]
@@ -201,7 +204,7 @@ class CommandBuilder:
         aliases = set(aliases)
         sub_matchers = None
         if recursive:
-            sub_matchers = [child_cmd.build_help(*help_prefixes, priority=priority-1, recursive=recursive, **help_args) for child_cmd in self.sub_commands]        
+            sub_matchers = [child_cmd.build_help(*help_prefixes, priority_delta=priority_delta-1, recursive=recursive, **help_args) for child_cmd in self.sub_commands]        
         config = nonebot.get_driver().config
         command_start = config.command_start
         regex = f"^({'|'.join(command_start)})({'|'.join(all_commands_combined)})(.*)$"
@@ -269,7 +272,11 @@ sub-commands:
                 command_text = command_text.strip()
                 logger.debug(f"got command text '{command_text}'")
                 cmd = " ".join([self.cmd, command_text])
-                env_vars = await self.command_env_async_factory(bot, event, state, matcher, regex)
+                env_futures = await asyncio.gather(self.command_env_async_factory(bot, event, state, matcher, regex), return_exceptions=True)
+                env_vars = env_futures[0]
+                if isinstance(env_vars, Exception):
+                    await matcher.send(dame(str(env_vars)))
+                    raise env_vars
                 output = await execute(cmd, user=self.run_as, env_vars=env_vars)
                 await matcher.send(output)
             matcher.command_builder = self

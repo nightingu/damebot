@@ -1,3 +1,3 @@
 #!/bin/bash
 
-wget $BOT_DOWNLOAD_URL
+wget --output-document $1 $BOT_DOWNLOAD_URL
