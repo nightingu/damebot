@@ -43,9 +43,27 @@ help|h: damebot! if you see だめ/ダメ/駄目, there must be something wrong.
             "r", "d", "roll",
             help_short="--version d",
         ),
-        CommandBuilder(script("scripts/write.sh"), "write", run_as="dameuser", help_short_text="write files like 'echo $2 > $1'. ", help_long_text="Usage: write <file_name> 'text'"),
-        CommandBuilder(script("scripts/no_bash.py"), "bash", "!", run_as="dameuser", init_fn=None),
-        CommandBuilder(script("scripts/download.sh"), "download", priority_delta=-1, help_short_text="从群文件下载到damebot", help_long_text="Usage: download <group_file_name>", command_env_async_factory=download_env)
+        CommandBuilder(
+            script("scripts/write.sh"), 
+            "write",
+            run_as="dameuser", 
+            help_short_text="write files like 'echo $2 > $1'. ", 
+            help_long_text="Usage: write <file_name> 'text'"
+        ),
+        CommandBuilder(
+            script("scripts/no_bash.py"),
+            "bash", "!",
+            run_as="dameuser", 
+            init_fn=None
+        ),
+        CommandBuilder(
+            script("scripts/download.sh"), 
+            "download",
+            priority_delta=-1, 
+            help_short_text="从群文件下载到damebot", 
+            help_long_text="Usage: download <group_file_name>", 
+            command_env_async_factory=download_env
+        )
     ]
 )
 root.build()
