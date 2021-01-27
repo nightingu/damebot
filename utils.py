@@ -142,6 +142,7 @@ class CommandBuilder:
         sub_commands=None, 
         priority=65536, 
         init_fn=None,
+        extra_command_env_async=None,
         **extra_kwargs):
         if sub_commands is None:
             sub_commands = []
@@ -251,14 +252,14 @@ sub-commands:
                 logger.debug(f"got command text '{command_text}'")
                 cmd = " ".join([self.cmd, command_text])
                 env_vars = os.environ.copy()
-                env_vars["BOT_EVENT_TYPE"] = event.get_type()
+                env_vars["BOT_EVENT_TYPE"] = str(event.get_type())
                 group_id = getattr(event, "group_id", None)
                 if group_id is not None:
-                    env_vars["BOT_GROUP_ID"] = group_id
-                env_vars["BOT_USER_ID"] = event.get_user_id()
-                env_vars["BOT_SESSION_ID"] = event.get_session_id()
+                    env_vars["BOT_GROUP_ID"] = str(group_id)
+                env_vars["BOT_USER_ID"] = str(event.get_user_id())
+                env_vars["BOT_SESSION_ID"] = str(event.get_session_id())
                 if event.is_tome():
-                    env_vars["TO_BOT"] = 1
+                    env_vars["TO_BOT"] = str(1)
                 output = await execute(cmd, user=self.run_as, env_vars=env_vars)
                 await matcher.send(output)
             matcher.command_builder = self
