@@ -3,8 +3,8 @@
 
 Usage:
   list <list_file> 
-  list add <item> <list_file> [before (index <item_index> | word <keyword>)]
-  list del (index <item_index> | word <keyword>)
+  list add <list_file> <item> [before (index <item_index> | key <keyword>)]
+  list del <list_file> (index <item_index> | key <keyword>)
   list view <list_file> [<keyword>]
   list all [<keyword>]
   list import <list_file>
@@ -31,19 +31,18 @@ extra = """
   list batch <index_file> [<seperator>]
 """
 from random import randint
-import shlex
-import sys
-from typing import Dict, List
+from typing import List
+from loguru import logger
 from docopt import docopt
-import subprocess
-from utils import dame
 from pathlib import Path
+
+import loguru
 
 def index(args):
     """index <item_index> | word <keyword>"""
     if args["<item_index>"]:
-        val = args["<item_index>"]
-        if val.isnum() and int(val) > 0:
+        val:str = args["<item_index>"]
+        if val.isdigit() and int(val) > 0:
             return int(val) - 1
         else:
             raise ValueError(f"{val} 需要为一个大于0的整数。")
@@ -104,11 +103,11 @@ class MyList:
     def index_list(self):
         idx = self._index
         idx = [idx] if isinstance(idx, int) else idx
-        idx = range(0, self.lst - 1) if idx is None else idx
+        idx = range(0, len(self.lst)) if idx is None else idx
         return idx
 
     def as_list(self):
-        return [x for i,x in self.lst if i in self.index_list()]
+        return [x for i,x in enumerate(self.lst) if i in self.index_list()]
 
     def shrink(self):
         return MyList(self.path, self.as_list())
@@ -122,7 +121,7 @@ class MyList:
         file_path = Path(file_path)
         if file_path.is_file():
             with open(file_path, "r", encoding="utf-8") as f:
-                return MyList(file_path, f.readlines())
+                return MyList(file_path, [l.strip() for l in f if l.strip() != ""])
         else:
             return MyList(file_path, [])
 
@@ -135,8 +134,11 @@ class MyList:
             return []
     
     def save(self):
+        # logger.debug(f"saving {self.path, self.lst, self._index ,self.index_list(), self.as_list()}")
         with open(self.path, "w", encoding="utf-8") as f:
-            f.writelines(self.as_list())
+            for l in self.as_list():
+                print(l.strip(), file=f)
+    
 
 all_options = """
 add
@@ -166,7 +168,6 @@ def import_from(args):
 all_funcs = {
     "add": lambda args: MyList.load_file(args["<list_file>"])
         .select(index(args))
-        .assert_one_index()
         .add_before(args["<item>"])
         .save(),
     "del": lambda args: MyList.load_file(args["<list_file>"])
@@ -194,8 +195,8 @@ if __name__ == '__main__':
     arguments = docopt(__doc__, version='My-list自定义列表 0.0.1', options_first=True)
     for item in all_funcs:
         if arguments[item]:
-            trigger(item)
+            trigger(item, arguments)
     if all(not arguments[opt] for opt in all_options):
-        trigger("")
+        trigger("", arguments)
     print(f"Not implemented: {arguments}")
     exit(1)
