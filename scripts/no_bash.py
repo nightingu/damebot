@@ -19,6 +19,7 @@ import shlex
 import sys
 from docopt import docopt
 import subprocess
+from utils import dame
 
 WHITELIST = [
     "ls","pwd","whoami",
@@ -40,6 +41,7 @@ if __name__ == '__main__':
             exit(subprocess.call(cmd))
         else:
             print(f"'{cmd[0]}' not in white-list [{' '.join(WHITELIST)}]")
+            print(f"{dame(cmd)}")
             exit(1)
     elif arguments["--whitelist"]:
         print(f"You can use [{' '.join(WHITELIST)}]")

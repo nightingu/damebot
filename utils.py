@@ -117,6 +117,12 @@ async def plain_string(cmd, user_typed_cmd, help_obj):
 
 async def command_env_settings(bot: Bot, event: Event, state: T_State, matcher: Matcher, regex: str):
     env_vars = os.environ.copy()
+    old_python_env = env_vars.get("PYTHONPATH", "")
+    if old_python_env.strip() == "":
+        old_python_env = []
+    else:
+        old_python_env = old_python_env.split(":")
+    env_vars["PYTHONPATH"] = ":".join(old_python_env + [str(PROJECT_ROOT)])
     env_vars["BOT_EVENT_TYPE"] = str(event.get_type())
     msg = str(event.get_plaintext())
     env_vars["BOT_EVENT_MESSAGE"] = msg

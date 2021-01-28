@@ -1,3 +1,4 @@
+from uid_gid import init_workspace
 import nonebot
 from nonebot import drivers
 import subprocess
@@ -6,6 +7,7 @@ from os import path
 from fastapi.middleware.cors import CORSMiddleware
 from nonebot.adapters.cqhttp import Bot as CQHTTPBot
 
+init_workspace()
 nonebot.init(command_start = {',', '，'})
 driver = nonebot.get_driver()
 app = nonebot.get_app()

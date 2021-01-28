@@ -79,7 +79,7 @@ def ensure_shared_dir(path: Path):
 
 def ensure_user_dir(path: Path, user: str): 
     os.makedirs(path, exist_ok=True)
-    os.system(f"chown {user}")
+    os.system(f"chown {user} {path}")
 
 def init_workspace():
     ensure_group_sync(default_group)
@@ -90,5 +90,4 @@ def init_workspace():
             os.system(f"chgrp root {item}")
             os.system(f"chown root {item}")
     ensure_shared_dir(SHARED)    
-
-init_workspace()
+    
