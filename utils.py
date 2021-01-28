@@ -314,8 +314,8 @@ sub-commands:
                     await matcher.send(dame(str(env_vars)))
                     raise env_vars
                 umask_int = None
-                if self.workspace_mode == WorkspaceMode.none:
-                    main_group, extra_group = extra_group[0], [main_group] + extra_group[1:]   
+                if self.workspace_mode == WorkspaceMode.none or self.workspace_mode == WorkspaceMode.plaintext:
+                    main_group, extra_group = extra_group[0], [main_group] + extra_group[1:]
                 if self.per_group:
                     extra_group.append(f"g{group_id}")
                 await ensure_user(current_user, main_group, extra_group) 
