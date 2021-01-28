@@ -2,12 +2,12 @@
 """自定义列表！
 
 Usage:
-  list <list_file> 
   list add <list_file> <item> [before (index <item_index> | key <keyword>)]
   list del <list_file> (index <item_index> | key <keyword>)
   list view <list_file> [<keyword>]
   list all [<keyword>]
   list import <list_file>
+  list <list_file> 
   list -h | --help
   list --version
 
@@ -92,7 +92,9 @@ class MyList:
         return self
 
     def random(self):
-        self._index = randint(0, len(self.lst - 1))
+        if len(self.lst) == 0:
+            raise ValueError(f"{self.path} 还空空如也，无法取出一个。")
+        self._index = randint(0, len(self.lst) - 1)
         return self
 
     def print(self):
@@ -182,7 +184,7 @@ all_funcs = {
     "view": lambda args: MyList.load_file(args["<list_file>"])
         .select(index(args))
         .print(),
-    "all": lambda args: "\n".join(l.name for l in MyList.load_dir("."))
+    "all": lambda args: "\n".join(str(l.path) for l in MyList.load_dir("."))
         
 }
 
@@ -197,7 +199,7 @@ if __name__ == '__main__':
     for item in all_funcs:
         if item.strip() != "" and arguments[item]:
             trigger(item, arguments)
-    if all(not arguments[opt] for opt in all_options):
+    if all(not arguments.get(opt, False) for opt in all_options):
         trigger("", arguments)
     print(f"Not implemented: {arguments}")
     exit(1)
