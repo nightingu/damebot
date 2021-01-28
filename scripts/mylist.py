@@ -163,8 +163,8 @@ def import_from(args):
         names = []
         for item in MyList.load_dir(path):
             item.strip_path().save()
-            names.append(item.path)
-        return "imported:" + "\n".join(names)
+            names.append(str(item.path.resolve()))
+        return "imported:\n" + "\n".join(names)
     else:
         raise ValueError(f"未知的文件类型{path}")
 
@@ -184,8 +184,8 @@ all_funcs = {
     "view": lambda args: MyList.load_file(args["<list_file>"])
         .select(index(args))
         .print(),
-    "all": lambda args: "\n".join(str(l.path) for l in MyList.load_dir("."))
-        
+    "all": lambda args: "\n".join(str(l.path) for l in MyList.load_dir(".")),
+    "import": import_from,
 }
 
 def trigger(opt: str, arguments):
