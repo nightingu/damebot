@@ -1,4 +1,6 @@
+from asyncio import tasks
 import shutil
+from task_queue import AsyncQueue
 from tokenize import group
 from typing import Dict
 import nonebot
@@ -17,7 +19,14 @@ import grp
 import pwd
 from uid_gid import ensure_user, ensure_user_dir
 from workspace import *
+from enum import Enum, auto
+from collections import defaultdict
 
+class WorkspaceMode(Enum):
+    serial = auto()
+    concurrent = auto()
+    plaintext = auto()
+    none = auto()
 
 def start_end_alternative(first_start=True):
     if first_start:
@@ -156,6 +165,7 @@ class CommandBuilder:
         sub_commands=None, 
         per_group=False,
         private_workspace=True,
+        workespace_mode=WorkspaceMode.serial,
         priority=65536, 
         priority_delta=0,
         help_priority=65536 // 2, 
@@ -194,6 +204,8 @@ class CommandBuilder:
         self.command_env_async_factory = command_env_async_factory
         self.per_group = per_group
         self.private_workspace = private_workspace
+        self.workspace_mode = workespace_mode
+        self.running_queues = defaultdict(AsyncQueue)
 
     def build_help(self, *help_prefixes, priority_delta=0, recursive=True, **help_args):
         logger.info(f"building help for '{self.cmd}' using '{self.help_short_async_factory.__name__}:{self.help_short}' and '{self.help_long_async_factory.__name__}:{self.help_long}'")
@@ -288,12 +300,16 @@ sub-commands:
                 if isinstance(env_vars, Exception):
                     await matcher.send(dame(str(env_vars)))
                     raise env_vars
-                output = await execute(
+                task = execute(
                     cmd, 
                     cwd=cwd,
                     user=self.run_as, 
                     env_vars=env_vars
                 )
+                if self.workspace_mode == WorkspaceMode.serial:
+                    queue = self.running_queues[cwd]
+                    task = queue.run(task)
+                output = await task
                 await matcher.send(output)
             matcher.command_builder = self
         matcher_subs = [x.build(build_sub=recursive, recursive=recursive) for x in self.sub_commands] if build_sub else None

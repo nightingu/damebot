@@ -16,6 +16,4 @@ ENV PYTHONUNBUFFERED=1
 
 ENV PYTHONPATH "/app"
 
-ENTRYPOINT [ "python" ]
-
-CMD [ "main.py" ]
+CMD [ "python", "main.py" ]
