@@ -96,8 +96,9 @@ class MyList:
         return self
 
     def print(self):
+        logger.debug(f"printing {self.path, self.lst, self._index ,self.index_list(), self.as_list()}")
         return "\n".join(
-            f"{i+1}:{x}" for i,x in self.lst if i in self.index_list()
+            f"{i+1}:{x}" for i,x in enumerate(self.lst) if i in self.index_list()
         )
     
     def index_list(self):
@@ -150,7 +151,7 @@ view
 all 
 batch
 import
-""".split()
+""".strip().split()
 
 def import_from(args):
     path = Path(args["<list_file>"])
@@ -187,14 +188,14 @@ all_funcs = {
 
 def trigger(opt: str, arguments):
     result = all_funcs[opt](arguments)
-    if result is not None and result.strip() == "":
+    if result is not None and result.strip() != "":
         print(result, end="")
     exit(0)   
 
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='My-list自定义列表 0.0.1', options_first=True)
     for item in all_funcs:
-        if arguments[item]:
+        if item.strip() != "" and arguments[item]:
             trigger(item, arguments)
     if all(not arguments[opt] for opt in all_options):
         trigger("", arguments)
