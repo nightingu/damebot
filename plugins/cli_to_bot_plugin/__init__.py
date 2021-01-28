@@ -45,18 +45,16 @@ help|h: damebot! if you see だめ/ダメ/駄目, there must be something wrong.
             help_short="--version d",
         ),
         CommandBuilder(
-            script(PROJECT_SCRIPT / "write.sh"), 
-            "write",
+            script(PROJECT_SCRIPT / "mylist.py"), 
+            "list", "l",
             per_group=True,
             workespace_mode=WorkspaceMode.plaintext,
-            help_short_text="write files like 'echo $2 > $1'. ", 
-            help_long_text="Usage: write <file_name> 'text'"
         ),
         CommandBuilder(
             script(PROJECT_SCRIPT / "no_bash.py"),
             "bash", "!",
             workespace_mode=WorkspaceMode.none,
-            init_fn=None
+            per_group=True,
         ),
         CommandBuilder(
             script(PROJECT_SCRIPT / "download.sh"), 

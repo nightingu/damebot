@@ -197,7 +197,7 @@ all_funcs = {
         .print(number=False),
     "import": import_from,
     "batch": lambda args: args["<seperator>"].join(MyList.load_file(file).random().as_list()[0]
-        for file in MyList.load_file(args["<index_file>"]).as_list()
+        for file in MyList.load_file(args["<index_file>"]).as_list() 
     )
     ,
 }
