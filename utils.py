@@ -1,4 +1,5 @@
 from asyncio import tasks
+from pprint import pprint
 import shutil
 from task_queue import AsyncQueue
 from tokenize import group
@@ -6,6 +7,7 @@ from typing import Dict
 import nonebot
 from nonebot import on_command, on_regex
 from nonebot.adapters import Bot, Event
+from nonebot.adapters.cqhttp.message import MessageSegment
 from nonebot.matcher import Matcher
 from nonebot.typing import T_State
 import asyncio
@@ -167,6 +169,7 @@ class CommandBuilder:
         sub_commands=None, 
         per_group=False,
         workespace_mode=WorkspaceMode.serial,
+        reply_notify=True,
         priority=65536, 
         priority_delta=0,
         help_priority=65536 // 2, 
@@ -213,6 +216,7 @@ class CommandBuilder:
         self.per_group = per_group
         self.workspace_mode = workespace_mode
         self.running_queues = defaultdict(AsyncQueue)
+        self.reply_notify = reply_notify
 
     def build_help(self, *help_prefixes, priority_delta=0, recursive=True, **help_args):
         logger.info(f"building help for '{self.cmd}' using '{self.help_short_async_factory.__name__}:{self.help_short}' and '{self.help_long_async_factory.__name__}:{self.help_long}'")
@@ -340,6 +344,8 @@ sub-commands:
                     queue = self.running_queues[cwd]
                     task = queue.run(task)
                 output = await task
+                if self.reply_notify:
+                    output = MessageSegment.at(event.get_user_id()) + output
                 await matcher.send(output)
             matcher.command_builder = self
         matcher_subs = [x.build(build_sub=recursive, recursive=recursive) for x in self.sub_commands] if build_sub else None

@@ -8,6 +8,7 @@ services:
       dockerfile: ./Dockerfile
     environment:
       - PYTHONASYNCIODEBUG=1
-    command: ["sh", "-c", "pip install debugpy -t /tmp && python /tmp/debugpy --wait-for-client --listen 0.0.0.0:5678 main.py "]
+    command: ["sh", "-c", "pip install -i https://mirrors.bfsu.edu.cn/pypi/web/simple debugpy -t /tmp && python /tmp/debugpy --wait-for-client --listen 0.0.0.0:5678 main.py "]
     ports:
+      - 5678:5678
       - 8081:8081
