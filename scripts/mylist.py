@@ -14,7 +14,7 @@ Usage:
 Options:
   -h --help     Show this screen.
   --version     Show version.
-  <list_file>   列表文件
+  <list_file>   列表文件或文件夹
   <index_file>  索引文件，用来批量抽取列表
   <seperator>   批量抽取后的分隔符 [default: ,]
   <item>        一个列表项目
@@ -97,10 +97,10 @@ class MyList:
         self._index = randint(0, len(self.lst) - 1)
         return self
 
-    def print(self):
-        logger.debug(f"printing {self.path, self.lst, self._index ,self.index_list(), self.as_list()}")
+    def print(self, number=True):
+        # logger.debug(f"printing {self.path, self.lst, self._index ,self.index_list(), self.as_list()}")
         return "\n".join(
-            f"{i+1}:{x}" for i,x in enumerate(self.lst) if i in self.index_list()
+            (f"{i+1}:" if number else "") + f"{x}" for i,x in enumerate(self.lst) if i in self.index_list()
         )
     
     def index_list(self):
@@ -125,6 +125,14 @@ class MyList:
         if file_path.is_file():
             with open(file_path, "r", encoding="utf-8") as f:
                 return MyList(file_path, [l.strip() for l in f if l.strip() != ""])
+        else:
+            return MyList(file_path, [])
+
+    @classmethod
+    def load_dir_name(cls, file_path):
+        file_path = Path(file_path)
+        if file_path.is_dir():
+            return MyList(file_path,[str(dir_file) for dir_file in file_path.iterdir() if dir_file.is_file()])
         else:
             return MyList(file_path, [])
 
@@ -184,7 +192,9 @@ all_funcs = {
     "view": lambda args: MyList.load_file(args["<list_file>"])
         .select(index(args))
         .print(),
-    "all": lambda args: "\n".join(str(l.path) for l in MyList.load_dir(".")),
+    "all": lambda args: MyList.load_dir_name(".")
+        .select(index(args))
+        .print(number=False),
     "import": import_from,
 }
 
