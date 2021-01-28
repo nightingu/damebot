@@ -7,6 +7,7 @@ Usage:
   list view <list_file> [<keyword>]
   list all [<keyword>]
   list import <list_file>
+  list batch <index_file> [<seperator>]
   list <list_file> 
   list -h | --help
   list --version
@@ -16,10 +17,10 @@ Options:
   --version     Show version.
   <list_file>   列表文件或文件夹
   <index_file>  索引文件，用来批量抽取列表
-  <seperator>   批量抽取后的分隔符 [default: ,]
+  <seperator>   批量抽取后的分隔符，默认为, 
   <item>        一个列表项目
   <item_index>  列表项目的索引，从1开始
-  <keyword>     要搜索的关键字 [default:  ]
+  <keyword>     要搜索的关键字 
   <new_name>    列表新的名称
 
 """
@@ -28,7 +29,6 @@ extra = """
   list rm <list_file>
   list dedup <list_file>
   list rename <list_file> <new_name>
-  list batch <index_file> [<seperator>]
 """
 from random import randint
 from typing import List
@@ -196,6 +196,10 @@ all_funcs = {
         .select(index(args))
         .print(number=False),
     "import": import_from,
+    "batch": lambda args: args["<seperator>"].join(MyList.load_file(file).random().as_list()[0]
+        for file in MyList.load_file(args["<index_file>"]).as_list()
+    )
+    ,
 }
 
 def trigger(opt: str, arguments):
@@ -206,6 +210,8 @@ def trigger(opt: str, arguments):
 
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='My-list自定义列表 0.0.1', options_first=True)
+    if not arguments["<seperator>"]:
+        arguments["<seperator>"] = ","
     for item in all_funcs:
         if item.strip() != "" and arguments[item]:
             trigger(item, arguments)
