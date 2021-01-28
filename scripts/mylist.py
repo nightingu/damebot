@@ -8,6 +8,7 @@ Usage:
   list all [<keyword>]
   list import <list_file>
   list batch <index_file> [<seperator>]
+  list fullbatch <index_file> [<seperator>]
   list <list_file> 
   list -h | --help
   list --version
@@ -198,8 +199,11 @@ all_funcs = {
     "import": import_from,
     "batch": lambda args: args["<seperator>"].join(MyList.load_file(file).random().as_list()[0]
         for file in MyList.load_file(args["<index_file>"]).as_list() 
-    )
-    ,
+    ),
+    "fullbatch": lambda args: "\n".join(
+        str(MyList.load_file(file).path) + args["<seperator>"] + MyList.load_file(file).random().as_list()[0]
+        for file in MyList.load_file(args["<index_file>"]).as_list() 
+    ),
 }
 
 def trigger(opt: str, arguments):
