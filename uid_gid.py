@@ -1,4 +1,5 @@
 import asyncio
+import loguru
 from nonebot.log import logger
 import os
 import re
@@ -22,10 +23,10 @@ async def execute_shell(cmd, cwd=WORKSPACE):
     logger.debug(f"usermod[{proc.returncode}] {stdout, stderr}")
     return proc.returncode, stdout, stderr
 
-uid_map = JSONStore(CACHE / "uid_map.json", mode=0o644)
-gid_map = JSONStore(CACHE / "gid_map.json", mode=0o644)
-user_main_group = JSONStore(CACHE / "user_group.json", mode=0o644)
-user_extra_group = JSONStore(CACHE / "user_extra_group.json", mode=0o644)
+uid_map = None
+gid_map = None
+user_main_group = None
+user_extra_group = None
 
 def ensure_group_sync(group_name="damebot"):
     return asyncio.run(ensure_group(group_name))
@@ -89,11 +90,29 @@ def ensure_shared_dir(path: Path):
     os.system(f"chmod g+w {path}")
     os.system(f"chmod +t {path}") 
 
-def ensure_user_dir(path: Path, user: str): 
+def ensure_user_dir(path: Path, user: str, group: str): 
+    logger.debug(f"ensuring {path} with {user} and {group}")
     os.makedirs(path, exist_ok=True)
-    os.system(f"chown {user} {path}")
+    code1 =  os.system(f"chown {user} {path}")
+    code2 = os.system(f"chgrp {group} {path}")
+    if all(code == 0 for code in [code1, code2]):
+        return
+    else:
+        logger.error(f"ensuring failed.")
 
 def init_workspace():
+    global uid_map, gid_map, user_main_group, user_extra_group
+    for item in workspace.__dict__.values():
+        if isinstance(item, Path):
+            os.makedirs(item, exist_ok=True)
+            os.system(f"chmod 755 {item}")
+            os.system(f"chgrp root {item}")
+            os.system(f"chown root {item}")
+    ensure_shared_dir(SHARED)
+    uid_map = JSONStore(CACHE / "uid_map.json", mode=0o644)
+    gid_map = JSONStore(CACHE / "gid_map.json", mode=0o644)
+    user_main_group = JSONStore(CACHE / "user_group.json", mode=0o644)
+    user_extra_group = JSONStore(CACHE / "user_extra_group.json", mode=0o644)
     logger.debug(f"init default group {default_group}")
     ensure_group_sync(default_group)
     for group in gid_map:
@@ -102,10 +121,3 @@ def init_workspace():
     for user in uid_map:  
         logger.debug(f"init user {user}")
         ensure_user_sync(user, user_main_group.get(user, default_group), user_extra_group.get(user, []))
-    for item in workspace.__dict__.values():
-        if isinstance(item, Path):
-            os.makedirs(item, exist_ok=True)
-            os.system(f"chmod 755 {item}")
-            os.system(f"chgrp root {item}")
-            os.system(f"chown root {item}")
-    ensure_shared_dir(SHARED)

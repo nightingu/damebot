@@ -17,7 +17,7 @@ import shlex
 import hashlib
 import grp
 import pwd
-from uid_gid import ensure_user, ensure_user_dir
+from uid_gid import ensure_user, ensure_user_dir, execute_shell
 from workspace import *
 from enum import Enum, auto
 from collections import defaultdict
@@ -77,18 +77,20 @@ def script(script_path: Path):
     os.system(f"chmod 755 {full_path}")
     return f"{full_path}"
 
-def set_ids(user_name):
+def set_ids(user_name, umask=None):
     def _set_id():
         user = pwd.getpwnam(user_name)
         os.setgid(user.pw_gid)
         os.setuid(user.pw_uid)
+        if umask is not None:
+            os.umask(umask)
     return _set_id
 
-async def execute(cmd, cwd=SHARED, user="commander", env_vars=None):
+async def execute(cmd, cwd=SHARED, user="commander", main_group="damebot", extra_group=tuple(), env_vars=None, umask=None):
     if env_vars is None:
         env_vars = {}
     os.makedirs(cwd, exist_ok=True)
-    result = await ensure_user(user)
+    result = await ensure_user(user, main_group, extra_group)
     splited = shlex.split(cmd)
     logger.info(f"trying to execute {splited}")
     proc = await asyncio.create_subprocess_exec(
@@ -96,7 +98,7 @@ async def execute(cmd, cwd=SHARED, user="commander", env_vars=None):
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         cwd=cwd,
-        preexec_fn=set_ids(user),
+        preexec_fn=set_ids(user, umask),
         env=env_vars,
     )
     logger.debug(f"'{cmd}' process created.")
@@ -154,7 +156,7 @@ class CommandBuilder:
     def __init__(
         self, cmd, 
         *cmd_in_dice, 
-        run_as="user",
+        run_as=None,
         help_short="--version", 
         help_short_text=None, 
         help_long="--help", 
@@ -164,7 +166,6 @@ class CommandBuilder:
         help_long_async_factory=None, 
         sub_commands=None, 
         per_group=False,
-        private_workspace=True,
         workespace_mode=WorkspaceMode.serial,
         priority=65536, 
         priority_delta=0,
@@ -189,6 +190,13 @@ class CommandBuilder:
             help_long = help_long_text
         if init_fn is None:
             init_fn = nop
+        if cmd_in_dice[0] is not None:
+            command_safe = "".join((ch if ch.isalpha() or ch.isnum() else "_") for ch in cmd_in_dice[0])
+        else:
+            command_safe = "user"
+        if run_as is None:
+            run_as = command_safe
+        self.command_safe = command_safe
         self.cmd = cmd
         self.init_fn = init_fn
         self.run_as = run_as
@@ -203,7 +211,6 @@ class CommandBuilder:
         self.extra_kwargs = extra_kwargs
         self.command_env_async_factory = command_env_async_factory
         self.per_group = per_group
-        self.private_workspace = private_workspace
         self.workspace_mode = workespace_mode
         self.running_queues = defaultdict(AsyncQueue)
 
@@ -291,19 +298,42 @@ sub-commands:
                         return
                 cwd = GROUP/str(group_id) if self.per_group else SHARED
                 os.makedirs(cwd, exist_ok=True)
-                if self.private_workspace:
-                    cwd = cwd / self.cmd_in_dice[0]
-                    ensure_user_dir(cwd, self.run_as)
+                current_user = self.run_as if not self.per_group else f"{self.run_as}g{group_id}"
+                main_group = self.command_safe
+                extra_group = ["damebot"]
+                if self.workspace_mode != WorkspaceMode.none:
+                    cwd = cwd / self.command_safe
                 cmd = " ".join([self.cmd, command_text])
                 env_futures = await asyncio.gather(self.command_env_async_factory(bot, event, state, matcher, regex), return_exceptions=True)
                 env_vars = env_futures[0]
                 if isinstance(env_vars, Exception):
                     await matcher.send(dame(str(env_vars)))
                     raise env_vars
+                umask_int = None
+                if self.workspace_mode == WorkspaceMode.none:
+                    main_group, extra_group = extra_group[0], [main_group] + extra_group[1:]   
+                if self.per_group:
+                    extra_group.append(f"g{group_id}")
+                await ensure_user(current_user, main_group, extra_group) 
+                if self.workspace_mode != WorkspaceMode.none:
+                    ensure_user_dir(cwd, current_user, main_group) 
+                if self.workspace_mode == WorkspaceMode.concurrent:
+                    umask_int = 0o002
+                    os.chmod(cwd, 0o775)
+                elif self.workspace_mode == WorkspaceMode.plaintext:
+                    umask_int = 0o002
+                    os.chmod(cwd, 0o775) 
+                    os.system(f"chgrp {extra_group[0]} {cwd}")
+                elif self.workspace_mode == WorkspaceMode.none:
+                    umask_int = 0o002
+                    os.chmod(cwd, 0o775)     
                 task = execute(
-                    cmd, 
+                    cmd,
+                    user=current_user,
+                    main_group=main_group,
+                    extra_group=extra_group,
+                    umask=umask_int,
                     cwd=cwd,
-                    user=self.run_as, 
                     env_vars=env_vars
                 )
                 if self.workspace_mode == WorkspaceMode.serial:

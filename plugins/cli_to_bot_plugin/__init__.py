@@ -47,15 +47,15 @@ help|h: damebot! if you see だめ/ダメ/駄目, there must be something wrong.
         CommandBuilder(
             script(PROJECT_SCRIPT / "write.sh"), 
             "write",
-            # run_as="dameuser", 
+            per_group=True,
+            workespace_mode=WorkspaceMode.plaintext,
             help_short_text="write files like 'echo $2 > $1'. ", 
             help_long_text="Usage: write <file_name> 'text'"
         ),
         CommandBuilder(
             script(PROJECT_SCRIPT / "no_bash.py"),
             "bash", "!",
-            private_workspace=False,
-            run_as="dameuser", 
+            workespace_mode=WorkspaceMode.none,
             init_fn=None
         ),
         CommandBuilder(
