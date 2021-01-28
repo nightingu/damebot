@@ -9,7 +9,7 @@ class AsyncQueue:
         self.loop_on: asyncio.Task = None
         if auto_start:
             self.start()
-            
+
     def start(self):
         if self.loop_on is None or self.loop_on.done():
             extra = "init"
@@ -22,13 +22,15 @@ class AsyncQueue:
     async def loop(self):
         while True:
             task, event, result = await self.queue.get()
-            logger.debug(f"got task")
-            done, _ = await asyncio.wait([task])
-            first = list(done)[0]
-            result.append(first.result())
-            logger.debug(f"pickup {result}")
-            event.set()
-            logger.debug(f"event complete")
+            try:
+                logger.debug(f"got task")
+                done, _ = await asyncio.wait([task])
+                first = list(done)[0]
+                result.append(first.result())
+                logger.debug(f"pickup {result}")
+            finally:
+                event.set()
+                logger.debug(f"event complete")
 
     async def run(self, task):
         self.start()
