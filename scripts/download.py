@@ -50,7 +50,7 @@ if __name__ == '__main__':
               z.extractall(path=folder_path)
               retcode_tar = 0
         elif tar_path.parts[-1].endswith(".7z"):
-          with py7zr.SevenZipFile(fileobj=io.BytesIO(wget.stdout), mode='r') as z:
+          with py7zr.SevenZipFile(io.BytesIO(wget.stdout), mode='r') as z:
               z.extractall(path=folder_path)
               retcode_tar = 0
         else:
