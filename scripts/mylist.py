@@ -3,7 +3,7 @@
 
 Usage:
   list add <list_file> <item> [before (index <item_index> | key <keyword>)]
-  list batchadd <list_file> <item>...
+  list batchadd <list_file> <batch_item>...
   list del <list_file> (index <item_index> | key <keyword>)
   list view <list_file> [<keyword>]
   list all [<keyword>]
@@ -23,6 +23,7 @@ Options:
   <index_file>  索引文件，用来批量抽取列表
   <seperator>   批量抽取后的分隔符，默认为, 
   <item>        一个列表项目
+  <batch_item>  一堆列表项目
   <item_index>  列表项目的索引，从1开始
   <keyword>     要搜索的关键字 
   <new_name>    列表新的名称
@@ -177,7 +178,7 @@ class MyList:
     def save(self):
         # logger.debug(f"saving {self.path, self.lst, self._index ,self.index_list(), self.as_list()}")
         with open(self.path, "w", encoding="utf-8") as f:
-            for l in self.as_list():
+            for l in self:
                 print(l.strip(), file=f)
     
     def remove_self(self):
@@ -222,7 +223,7 @@ all_funcs = {
     "import": import_from,
     "batchadd": lambda args: MyList.load_file(args["<list_file>"])
         .select(index(args))
-        .merge(args["<item>"])
+        .merge(args["<batch_item>"])
         .save(),
     "batch": lambda args: args["<seperator>"].join(MyList.load_file(file).random().as_list()[0]
         for file in MyList.load_file(args["<index_file>"]).as_list() 
