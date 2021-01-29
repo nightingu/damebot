@@ -46,7 +46,7 @@ def dame(err: str):
   {err}      
 """.strip()
 
-async def summary(s: str, limit=50, keep_first=True, fill_in_gen=fill_in_generate):
+async def summary(s: str, limit=100, keep_first=False, fill_in_gen=fill_in_generate):
     if len(s) > limit:
         lines = s.splitlines(keepends=True)
         if len(lines) <= 1:

@@ -3,9 +3,12 @@
 
 Usage:
   list add <list_file> <item> [before (index <item_index> | key <keyword>)]
+  list batchadd <list_file> <item>...
   list del <list_file> (index <item_index> | key <keyword>)
   list view <list_file> [<keyword>]
   list all [<keyword>]
+  list dedup <list_file>
+  list remove-list <list_file>
   list import <list_file>
   list batch <index_file> [<seperator>]
   list fullbatch <index_file> [<seperator>]
@@ -36,8 +39,8 @@ from typing import List
 from loguru import logger
 from docopt import docopt
 from pathlib import Path
-
-import loguru
+import os
+import shutil
 
 def index(args):
     """index <item_index> | word <keyword>"""
@@ -98,11 +101,20 @@ class MyList:
         self._index = randint(0, len(self.lst) - 1)
         return self
 
-    def print(self, number=True):
+    def log(self, message_func):
+        print(message_func(self))
+        return self
+
+    def print(self, number=True, chain=False):
         # logger.debug(f"printing {self.path, self.lst, self._index ,self.index_list(), self.as_list()}")
-        return "\n".join(
+        result = "\n".join(
             (f"{i+1}:" if number else "") + f"{x}" for i,x in enumerate(self.lst) if i in self.index_list()
         )
+        if chain:
+            print(result)
+            return self
+        else:
+            return result
     
     def index_list(self):
         idx = self._index
@@ -119,6 +131,23 @@ class MyList:
     def strip_path(self):
         self.path = Path(".") / self.path.parts[-1]
         return self
+
+    def __iter__(self):
+        return iter(self.as_list())
+
+    def merge(self, other):
+        self.lst.extend(other)
+        return self
+
+    def dedup(self):
+        rev_map = {k:i for i,k in reversed(list(enumerate(self)))}
+        all_index = set(range(0,len(self.as_list())))
+        deduped = all_index - set(rev_map.values())
+        deduped = list(deduped)
+        deduped.sort()
+        print(f"de-duplicated '{self.path}': ")
+        print(self.select(deduped).print())
+        return self.select(all_index - set(deduped))
 
     @classmethod
     def load_file(cls, file_path):
@@ -151,27 +180,21 @@ class MyList:
             for l in self.as_list():
                 print(l.strip(), file=f)
     
-
-all_options = """
-add
-del
-rm 
-dedup
-rename
-view
-all 
-batch
-import
-""".strip().split()
+    def remove_self(self):
+        if self.path.is_file():
+            print(f"remove {len(self.as_list())} items from '{self.path}'")
+            os.remove(self.path)
+        else:
+            print(f"要移除的 '{self.path}' 不存在。")
 
 def import_from(args):
-    path = Path(args["<list_file>"])
+    path = Path(args["<list_file>"]).resolve()
     if path.is_file():
-        return MyList.load_file(path).strip_path().save()
+        return MyList.load_file(path.parts[-1]).merge(MyList.load_file(path)).dedup().save()
     elif path.is_dir():
         names = []
         for item in MyList.load_dir(path):
-            item.strip_path().save()
+            MyList.load_file(item.parts[-1]).merge(item).dedup().save()
             names.append(str(item.path.resolve()))
         return "imported:\n" + "\n".join(names)
     else:
@@ -197,6 +220,10 @@ all_funcs = {
         .select(index(args))
         .print(number=False),
     "import": import_from,
+    "batchadd": lambda args: MyList.load_file(args["<list_file>"])
+        .select(index(args))
+        .merge(args["<item>"])
+        .save(),
     "batch": lambda args: args["<seperator>"].join(MyList.load_file(file).random().as_list()[0]
         for file in MyList.load_file(args["<index_file>"]).as_list() 
     ),
@@ -204,6 +231,12 @@ all_funcs = {
         str(MyList.load_file(file).path) + args["<seperator>"] + MyList.load_file(file).random().as_list()[0]
         for file in MyList.load_file(args["<index_file>"]).as_list() 
     ),
+    "dedup": lambda args: MyList.load_file(args["<list_file>"])
+        .dedup()
+        .save(),
+    "remove-list": lambda args: MyList.load_file(args["<list_file>"])
+        .remove_self()
+    
 }
 
 def trigger(opt: str, arguments):
@@ -219,7 +252,7 @@ if __name__ == '__main__':
     for item in all_funcs:
         if item.strip() != "" and arguments[item]:
             trigger(item, arguments)
-    if all(not arguments.get(opt, False) for opt in all_options):
+    if all(not arguments.get(opt, False) for opt in all_funcs.keys()):
         trigger("", arguments)
     print(f"Not implemented: {arguments}")
     exit(1)
