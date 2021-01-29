@@ -191,11 +191,11 @@ class MyList:
 def import_from(args):
     path = Path(args["<list_file>"]).resolve()
     if path.is_file():
-        return MyList.load_file(path.parts[-1]).merge(MyList.load_file(path)).dedup().save()
+        return MyList.load_file(path.parts[-1]).merge(MyList.load_file(path)).save()
     elif path.is_dir():
         names = []
         for item in MyList.load_dir(path):
-            MyList.load_file(item.path.parts[-1]).merge(item).dedup().save()
+            MyList.load_file(item.path.parts[-1]).merge(item).save()
             names.append(str(item.path.resolve()))
         return "imported:\n" + "\n".join(names)
     else:
