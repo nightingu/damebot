@@ -246,7 +246,7 @@ def trigger(opt: str, arguments):
     exit(0)   
 
 if __name__ == '__main__':
-    arguments = docopt(__doc__, version='My-list自定义列表 0.0.1', options_first=True)
+    arguments = docopt(__doc__, version='My-list自定义列表 0.1.1', options_first=True)
     if not arguments["<seperator>"]:
         arguments["<seperator>"] = ","
     for item in all_funcs:

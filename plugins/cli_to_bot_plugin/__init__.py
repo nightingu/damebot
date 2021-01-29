@@ -57,12 +57,10 @@ help|h: damebot! if you see だめ/ダメ/駄目, there must be something wrong.
             per_group=True,
         ),
         CommandBuilder(
-            script(PROJECT_SCRIPT / "download.sh"), 
+            script(PROJECT_SCRIPT / "download.py"), 
             "download",
             priority_delta=-1, 
             per_group=True,
-            help_short_text="从群文件下载到damebot", 
-            help_long_text="Usage: download <group_file_name>", 
             command_env_async_factory=download_env
         )
     ]
