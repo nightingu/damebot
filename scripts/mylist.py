@@ -195,7 +195,7 @@ def import_from(args):
     elif path.is_dir():
         names = []
         for item in MyList.load_dir(path):
-            MyList.load_file(item.parts[-1]).merge(item).dedup().save()
+            MyList.load_file(item.path.parts[-1]).merge(item).dedup().save()
             names.append(str(item.path.resolve()))
         return "imported:\n" + "\n".join(names)
     else:
