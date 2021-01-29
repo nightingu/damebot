@@ -12,6 +12,8 @@ from utils import *
 from workspace import *
 from collections import namedtuple
 import pathlib
+import docopt
+from scripts import download
 
 nonebot.get_driver()
 
@@ -20,7 +22,11 @@ async def download_env(bot: Bot, event: Event, state: T_State, matcher: Matcher,
     if "BOT_GROUP_ID" not in envs:
         raise ValueError(f"not in group, no group files found")
     group_id = int(envs["BOT_GROUP_ID"])
-    file_name = envs["BOT_EVENT_COMMAND_ARGS"].strip()
+    try:
+        args = docopt.docopt(download.__doc__, shlex.split(envs["BOT_EVENT_COMMAND_ARGS"]), help=False)
+    except docopt.DocoptExit as e:
+        raise ValueError(e)
+    file_name = args["<path>"] or args["<tar_or_zip>"]
     file_path = pathlib.Path(file_name)
     current_files = await bot.call_api("get_group_root_files", group_id=group_id)
     for folder_path in file_path.parts[:-1]:
