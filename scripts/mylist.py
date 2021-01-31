@@ -65,7 +65,7 @@ class MyList:
         self.lst = lst
         self._index = None
 
-    def select(self, index):
+    def select_(self, index):
         """index <item_index> | word <keyword>"""
         if callable(index):
             ids = [i for i,s in enumerate(self.lst) if index(s)]
@@ -84,7 +84,7 @@ class MyList:
             raise ValueError(f"index数量太多: {idx}")    
         return self
 
-    def add_before(self, item):
+    def add_before_(self, item):
         idx = self._index
         if idx is None:
             idx = len(self.lst)
@@ -92,13 +92,13 @@ class MyList:
         self._index = None
         return self
 
-    def delete(self):
+    def delete_(self):
         idx = self._index
         del self.lst[idx]
         self._index = None
         return self
 
-    def random(self):
+    def random_(self):
         if len(self.lst) == 0:
             raise ValueError(f"{self.path} 还空空如也，无法取出一个。")
         self._index = randint(0, len(self.lst) - 1)
@@ -149,20 +149,21 @@ class MyList:
     def __iter__(self):
         return iter(self.as_list())
 
-    def merge(self, other):
+    def merge_(self, other):
         self.lst.extend(other)
         return self
 
-    def dedup(self):
+    def dedup_(self):
         rev_map = {k:i for i,k in reversed(list(enumerate(self)))}
         all_index = set(range(0,len(self.as_list())))
         deduped = all_index - set(rev_map.values())
         deduped = list(deduped)
         deduped.sort()
         print(f"de-duplicated '{self.path}': ")
-        print(self.select(deduped).print())
-        return self.select(all_index - set(deduped))
+        print(self.select_(deduped).print())
+        return self.select_(all_index - set(deduped))
 
+    @ring.lru()
     @classmethod
     def load_file(cls, file_path):
         file_path = Path(file_path)
@@ -204,11 +205,11 @@ class MyList:
 def import_from(args):
     path = Path(args["<list_file>"]).resolve()
     if path.is_file():
-        return MyList.load_file(path.parts[-1]).merge(MyList.load_file(path)).save()
+        return MyList.load_file(path.parts[-1]).merge_(MyList.load_file(path)).save()
     elif path.is_dir():
         names = []
         for item in MyList.load_dir(path):
-            MyList.load_file(item.path.parts[-1]).merge(item).save()
+            MyList.load_file(item.path.parts[-1]).merge_(item).save()
             names.append(str(item.path.resolve()))
         return "imported:\n" + "\n".join(names)
     else:
@@ -216,27 +217,27 @@ def import_from(args):
 
 all_funcs = {
     "add": lambda args: MyList.load_file(args["<list_file>"])
-        .select(index(args))
-        .add_before(args["<item>"])
+        .select_(index(args))
+        .add_before_(args["<item>"])
         .save(),
     "del": lambda args: MyList.load_file(args["<list_file>"])
-        .select(index(args))
+        .select_(index(args))
         .assert_one_index()
-        .delete()
+        .delete_()
         .save(),
     "": lambda args: MyList.load_file(args["<list_file>"])
-        .random()
+        .random_()
         .as_list()[0],
     "view": lambda args: MyList.load_file(args["<list_file>"])
-        .select(index(args))
+        .select_(index(args))
         .print(),
     "all": lambda args: MyList.load_dir_name(".")
-        .select(index(args))
+        .select_(index(args))
         .print(number=False),
     "import": import_from,
     "batchadd": lambda args: MyList.load_file(args["<list_file>"])
-        .select(index(args))
-        .merge(args["<batch_item>"])
+        .select_(index(args))
+        .merge_(args["<batch_item>"])
         .save(),
     "batch": lambda args:
         MyList.load_file(args["<index_file>"])
@@ -246,11 +247,11 @@ all_funcs = {
     #     for file in MyList.load_file(args["<index_file>"]).as_list() 
     ,
     "fullbatch": lambda args: "\n".join(
-        str(MyList.load_file(file).path) + args["<seperator>"] + MyList.load_file(file).random().as_list()[0]
+        str(MyList.load_file(file).path) + args["<seperator>"] + MyList.load_file(file).random_().as_list()[0]
         for file in MyList.load_file(args["<index_file>"]).as_list() 
     ),
     "dedup": lambda args: MyList.load_file(args["<list_file>"])
-        .dedup()
+        .dedup_()
         .save(),
     "remove-list": lambda args: MyList.load_file(args["<list_file>"])
         .remove_self()
