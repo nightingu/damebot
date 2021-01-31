@@ -21,7 +21,7 @@ Options:
   --version     Show version.
   <list_file>   列表文件或文件夹
   <index_file>  索引文件，用来批量抽取列表
-  <seperator>   批量抽取后的分隔符，默认为, 
+  <seperator>   批量抽取后的分隔符，默认为','。'off'视为空字符串。
   <item>        一个列表项目
   <batch_item>  一堆列表项目
   <item_index>  列表项目的索引，从1开始
@@ -250,6 +250,8 @@ if __name__ == '__main__':
     arguments = docopt(__doc__, version='My-list自定义列表 0.1.1', options_first=True)
     if not arguments["<seperator>"]:
         arguments["<seperator>"] = ","
+    if arguments["<seperator>"].strip() == "off":
+        arguments["<seperator>"] = ""
     for item in all_funcs:
         if item.strip() != "" and arguments[item]:
             trigger(item, arguments)
