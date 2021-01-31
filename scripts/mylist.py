@@ -11,6 +11,7 @@ Usage:
   list remove-list <list_file>
   list import <list_file>
   list type (normal|bach|metabach)
+  list godel <list_file> [<seperator> [<max_step>]]
   list batch <index_file> [<seperator>]
   list fullbatch <index_file> [<seperator>]
   list <list_file> 
@@ -23,6 +24,7 @@ Options:
   <list_file>   列表文件或文件夹
   <index_file>  索引文件，用来批量抽取列表
   <seperator>   批量抽取后的分隔符，默认为','。'off'视为空字符串。
+  <max_step>    巴赫列表展开的最大步数，默认为4。
   <item>        一个列表项目
   <batch_item>  一堆列表项目
   <item_index>  列表项目的索引，从1开始
@@ -157,9 +159,31 @@ class MyList:
 
     def batch(self):
         return MyList(
-            self.path.parent / f"{self.path.name}batch", 
+            Path(self.path.name), 
             [MyList.load_file(file).random_pick() for file in self]
         )
+
+    def expand(self):
+        if self.is_meta_batch:
+            return [self.random_pick()]
+        elif self.is_batch:
+            return self.batch().as_list()
+        elif len(self.lst) > 0:
+            return [self.random_pick()]
+        else:
+            return []
+
+    def godel(self, remain_step):
+        if remain_step > 63:
+            remain_step = 63
+        current = self.expand()
+        for _ in range(remain_step-1):
+            extendable_indexes = [i for i, name in enumerate(current) if len(MyList.load_file(name).lst) > 0]
+            if not extendable_indexes:
+                break
+            pick_batch = choice(extendable_indexes)
+            current[pick_batch:pick_batch+1] = MyList.load_file(current[pick_batch]).expand()
+        return MyList(self.path, current)
 
     def __iter__(self):
         return iter(self.as_list())
@@ -283,7 +307,9 @@ all_funcs = {
     "remove-list": lambda args: MyList.load_file(args["<list_file>"])
         .remove_self(),
     "type": type_switch,
-    
+    "godel": lambda args: MyList.load_file(args["<list_file>"])
+        .godel(args["<max_step>"])
+        .print(number=False, item_seperator=args["<seperator>"]),
 }
 
 def trigger(opt: str, arguments):
@@ -296,6 +322,8 @@ if __name__ == '__main__':
     arguments = docopt(__doc__, version='My-list自定义列表 0.1.1', options_first=True)
     if not arguments["<seperator>"]:
         arguments["<seperator>"] = ","
+    if not arguments["<max_step>"]:
+        arguments["<max_step>"] = 4
     if arguments["<seperator>"].strip() == "off":
         arguments["<seperator>"] = ""
     for item in all_funcs:
