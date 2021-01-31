@@ -46,6 +46,7 @@ from pathlib import Path
 import os
 import shutil
 import ring
+import sys
 
 def index(args):
     """index <item_index> | word <keyword>"""
@@ -142,17 +143,17 @@ class MyList:
         self.path = Path(".") / self.path.parts[-1]
         return self
 
-    # @ring.lru()
+    @ring.lru()
     @property
     def is_batch(self):
         return len(self.lst) > 0 and all(len(MyList.load_file(item).lst) > 0 for item in self)
 
-    # @ring.lru()
+    @ring.lru()
     @property
     def is_meta_batch(self):
         return all(MyList.load_file(item).is_batch for item in self)
 
-    # @ring.lru()
+    @ring.lru()
     @property
     def is_normal(self):
         return not self.is_batch
@@ -172,6 +173,9 @@ class MyList:
             return [self.random_pick()]
         else:
             return []
+
+    def __str__(self) -> str:
+        return self.print()
 
     def godel(self, remain_step):
         if remain_step > 63:
@@ -202,7 +206,7 @@ class MyList:
         print(self.select_(deduped).print())
         return self.select_(all_index - set(deduped))
 
-    # @ring.lru()
+    @ring.lru()
     @classmethod
     def load_file(cls, file_path):
         file_path = Path(file_path)
@@ -316,20 +320,26 @@ def trigger(opt: str, arguments):
     result = all_funcs[opt](arguments)
     if result is not None and result.strip() != "":
         print(result, end="")
-    exit(0)   
+    return 0   
 
-if __name__ == '__main__':
-    arguments = docopt(__doc__, version='My-list自定义列表 0.1.1', options_first=True)
+
+def main(argv):
+    arguments = docopt(__doc__, argv=argv, version='My-list自定义列表 0.1.1', options_first=True)
     if not arguments["<seperator>"]:
         arguments["<seperator>"] = ","
     if not arguments["<max_step>"]:
         arguments["<max_step>"] = 4
+    arguments["<max_step>"] = int(arguments["<max_step>"])    
     if arguments["<seperator>"].strip() == "off":
         arguments["<seperator>"] = ""
     for item in all_funcs:
         if item.strip() != "" and arguments[item]:
-            trigger(item, arguments)
+            return trigger(item, arguments)
     if all(not arguments.get(opt, False) for opt in all_funcs.keys()):
-        trigger("", arguments)
+        return trigger("", arguments)
     print(f"Not implemented: {arguments}")
-    exit(1)
+    return 1
+
+if __name__ == '__main__':
+    exit(main(sys.argv[1:]))
+    
