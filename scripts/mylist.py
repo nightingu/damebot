@@ -10,6 +10,7 @@ Usage:
   list dedup <list_file>
   list remove-list <list_file>
   list import <list_file>
+  list type (normal|batch|metabatch)
   list batch <index_file> [<seperator>]
   list fullbatch <index_file> [<seperator>]
   list <list_file> 
@@ -35,13 +36,14 @@ extra = """
   list dedup <list_file>
   list rename <list_file> <new_name>
 """
-from random import randint
+from random import randint, choice
 from typing import List
 from loguru import logger
 from docopt import docopt
 from pathlib import Path
 import os
 import shutil
+import ring
 
 def index(args):
     """index <item_index> | word <keyword>"""
@@ -102,6 +104,11 @@ class MyList:
         self._index = randint(0, len(self.lst) - 1)
         return self
 
+    def random_pick(self):
+        if len(self.as_list()) == 0:
+            raise ValueError(f"{self.path} 还空空如也，无法取出一个。")
+        return choice(self.as_list())
+
     def log(self, message_func):
         print(message_func(self))
         return self
@@ -132,6 +139,12 @@ class MyList:
     def strip_path(self):
         self.path = Path(".") / self.path.parts[-1]
         return self
+
+    def batch(self):
+        return MyList(
+            self.path.parent / f"{self.path.name}batch", 
+            [MyList.load_file(file).random_pick() for file in self]
+        )
 
     def __iter__(self):
         return iter(self.as_list())
@@ -225,9 +238,13 @@ all_funcs = {
         .select(index(args))
         .merge(args["<batch_item>"])
         .save(),
-    "batch": lambda args: args["<seperator>"].join(MyList.load_file(file).random().as_list()[0]
-        for file in MyList.load_file(args["<index_file>"]).as_list() 
-    ),
+    "batch": lambda args:
+        MyList.load_file(args["<index_file>"])
+            .batch()
+            .print(number=False, item_seperator=args["<seperator>"])
+    # args["<seperator>"].join(MyList.load_file(file).random().as_list()[0]
+    #     for file in MyList.load_file(args["<index_file>"]).as_list() 
+    ,
     "fullbatch": lambda args: "\n".join(
         str(MyList.load_file(file).path) + args["<seperator>"] + MyList.load_file(file).random().as_list()[0]
         for file in MyList.load_file(args["<index_file>"]).as_list() 
