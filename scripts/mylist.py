@@ -106,10 +106,10 @@ class MyList:
         print(message_func(self))
         return self
 
-    def print(self, number=True, chain=False):
+    def print(self, number=True, chain=False, number_seperator=":", item_seperator="\n"):
         # logger.debug(f"printing {self.path, self.lst, self._index ,self.index_list(), self.as_list()}")
-        result = "\n".join(
-            (f"{i+1}:" if number else "") + f"{x}" for i,x in enumerate(self.lst) if i in self.index_list()
+        result = item_seperator.join(
+            (f"{i+1}{number_seperator}" if number else "") + f"{x}" for i,x in enumerate(self.lst) if i in self.index_list()
         )
         if chain:
             print(result)
