@@ -210,7 +210,7 @@ class MyList:
     @classmethod
     def load_file(cls, file_path):
         file_path = Path(file_path)
-        if file_path.is_file() and len(str(file_path).decode()) < 63:
+        if file_path.is_file() and len(str(file_path).encode()) < 63:
             with open(file_path, "r", encoding="utf-8") as f:
                 return MyList(file_path, [l.strip() for l in f if l.strip() != ""])
         else:
