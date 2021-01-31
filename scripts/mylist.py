@@ -10,7 +10,7 @@ Usage:
   list dedup <list_file>
   list remove-list <list_file>
   list import <list_file>
-  list type (normal|batch|metabatch)
+  list type (normal|bach|metabach)
   list batch <index_file> [<seperator>]
   list fullbatch <index_file> [<seperator>]
   list <list_file> 
@@ -140,6 +140,21 @@ class MyList:
         self.path = Path(".") / self.path.parts[-1]
         return self
 
+    # @ring.lru()
+    @property
+    def is_batch(self):
+        return len(self.lst) > 0 and all(len(MyList.load_file(item).lst) > 0 for item in self)
+
+    # @ring.lru()
+    @property
+    def is_meta_batch(self):
+        return all(MyList.load_file(item).is_batch for item in self)
+
+    # @ring.lru()
+    @property
+    def is_normal(self):
+        return not self.is_batch
+
     def batch(self):
         return MyList(
             self.path.parent / f"{self.path.name}batch", 
@@ -163,7 +178,7 @@ class MyList:
         print(self.select_(deduped).print())
         return self.select_(all_index - set(deduped))
 
-    @ring.lru()
+    # @ring.lru()
     @classmethod
     def load_file(cls, file_path):
         file_path = Path(file_path)
@@ -215,6 +230,18 @@ def import_from(args):
     else:
         raise ValueError(f"未知的文件类型{path}")
 
+def type_switch(args):
+    all_list = MyList.load_dir_name(".")
+    if args["normal"]:
+        return all_list.select_(lambda item: MyList.load_file(item).is_normal).print()
+    elif args["bach"]:
+        return all_list.select_(lambda item: MyList.load_file(item).is_batch).print()
+    elif args["metabach"]:
+        return all_list.select_(lambda item: MyList.load_file(item).is_meta_batch).print()
+    else:
+        raise ValueError("不支持的type。")
+
+
 all_funcs = {
     "add": lambda args: MyList.load_file(args["<list_file>"])
         .select_(index(args))
@@ -254,7 +281,8 @@ all_funcs = {
         .dedup_()
         .save(),
     "remove-list": lambda args: MyList.load_file(args["<list_file>"])
-        .remove_self()
+        .remove_self(),
+    "type": type_switch,
     
 }
 
