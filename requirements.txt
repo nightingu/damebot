@@ -1,4 +1,4 @@
-nonebot2==2.0.0a8.post2
+nonebot2==2.0.0a9
 nonebot-plugin-test==0.1.0
 xdice==1.2.1
 json-store==3.0
