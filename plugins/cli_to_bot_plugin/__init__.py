@@ -51,6 +51,12 @@ help|h: damebot! if you see だめ/ダメ/駄目, there must be something wrong.
             help_short="--version d",
         ),
         CommandBuilder(
+            "python -m roll", 
+            "rollhidden", "rh",
+            help_short="暗骰dice",
+            hidden_result=True,
+        ),
+        CommandBuilder(
             script(PROJECT_SCRIPT / "mylist.py"), 
             "list", "l",
             per_group=True,

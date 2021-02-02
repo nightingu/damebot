@@ -175,6 +175,7 @@ class CommandBuilder:
         help_priority=65536 // 2, 
         help_priority_delta=0,
         init_fn=None,
+        hidden_result=False,
         command_env_async_factory=command_env_settings,
         **extra_kwargs):
         if sub_commands is None:
@@ -217,6 +218,7 @@ class CommandBuilder:
         self.workspace_mode = workespace_mode
         self.running_queues = defaultdict(AsyncQueue)
         self.reply_notify = reply_notify
+        self.hidden_result = hidden_result
 
     def build_help(self, *help_prefixes, priority_delta=0, recursive=True, **help_args):
         logger.info(f"building help for '{self.cmd}' using '{self.help_short_async_factory.__name__}:{self.help_short}' and '{self.help_long_async_factory.__name__}:{self.help_long}'")
@@ -346,7 +348,10 @@ sub-commands:
                 output = await task
                 if self.reply_notify:
                     output = MessageSegment.at(event.get_user_id()) + output
-                await matcher.send(output)
+                extra_msgs = {}
+                if self.hidden_result:
+                    extra_msgs.update({"message_type": "private"})
+                await matcher.send(output, **extra_msgs)
             matcher.command_builder = self
         matcher_subs = [x.build(build_sub=recursive, recursive=recursive) for x in self.sub_commands] if build_sub else None
         logger.info(f"builded '{self.cmd}'")
