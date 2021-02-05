@@ -10,7 +10,7 @@ Usage:
   list dedup <list_file>
   list remove-list <list_file>
   list import <list_file>
-  list type (normal|bach|metabach)
+  list type (normal|bach)
   list godel <list_file> [<seperator> [<max_step> [debug]]]
   list batch <index_file> [<seperator>]
   list fullbatch <index_file> [<seperator>]
@@ -62,10 +62,40 @@ def index(args):
     else:
         return None
 
+# class OneOf(list):
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+
+#     def __str__(self):
+#         return f"OneOf[{','.join(str(x) for x in self)}]"
+    
+#     def expand(self):
+#         v = choice(self)
+#         if hasattr(v, "expand"):
+#             v = v.expand()
+#             return v
+#         elif
+#         return [v]
+
+# class All(list):
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+
+#     def __str__(self):
+#         return f"All[{','.join(str(x) for x in self)}]"
+    
+#     def expand(self):
+#         v_all = []
+#         for item in self:
+#             if hasattr(item, "expand"):
+#                 item = item.expand()
+
+
 class MyList:
-    def __init__(self, path: Path, lst: List[str]) -> None:
+    def __init__(self, path: Path, lst: List[str], is_batch: bool = False) -> None:
         self.path = path
         self.lst = lst
+        self.is_batch = is_batch
         self._index = None
 
     def select_(self, index):
@@ -145,29 +175,38 @@ class MyList:
 
     @ring.lru()
     @property
-    def is_batch(self):
-        return len(self.lst) > 0 and all(len(MyList.load_file(item).lst) > 0 for item in self)
-
-    @ring.lru()
-    @property
-    def is_meta_batch(self):
-        return all(MyList.load_file(item).is_batch for item in self)
-
-    @ring.lru()
-    @property
     def is_normal(self):
         return not self.is_batch
 
     def batch(self):
+        result = []
+        for file in self:
+            sublist = MyList.load_file(file)
+            ls = sublist.expand()
+            if not ls:
+                ls = [file]
+            result.extend(ls)
         return MyList(
             Path(self.path.name), 
-            [MyList.load_file(file).random_pick() for file in self]
+            result
         )
 
+    # def __bool__(self):
+    #     if self.lst:
+    #         return True
+    #     else:
+    #         return False
+
     def expand(self):
-        if self.is_meta_batch:
+        if self.is_batch:
+            return self.as_list()
+        elif len(self.lst) > 0:
             return [self.random_pick()]
-        elif self.is_batch:
+        else:
+            return []
+
+    def expand_godel(self):
+        if self.is_batch:
             return self.batch().as_list()
         elif len(self.lst) > 0:
             return [self.random_pick()]
@@ -180,7 +219,7 @@ class MyList:
     def godel(self, remain_step, debug):
         if remain_step > 63:
             remain_step = 63
-        current = self.expand()
+        current = self.expand_godel()
         for _ in range(remain_step-1):
             if debug:
                 print(current)
@@ -188,7 +227,7 @@ class MyList:
             if not extendable_indexes:
                 break
             pick_batch = choice(extendable_indexes)
-            current[pick_batch:pick_batch+1] = MyList.load_file(current[pick_batch]).expand()
+            current[pick_batch:pick_batch+1] = MyList.load_file(current[pick_batch]).expand_godel()
         return MyList(self.path, current)
 
     def __iter__(self):
@@ -214,7 +253,12 @@ class MyList:
         file_path = Path(file_path)
         if len(str(file_path).encode()) < 63 and file_path.is_file():
             with open(file_path, "r", encoding="utf-8") as f:
-                return MyList(file_path, [l.strip() for l in f if l.strip() != ""])
+                raw_list = [l.strip() for l in f if l.strip() != ""]
+                is_batch = False
+                if raw_list and raw_list[0] == "batch":
+                    del raw_list[0]
+                    is_batch = True
+                return MyList(file_path, raw_list, is_batch=is_batch)
         else:
             return MyList(file_path, [])
 
@@ -266,8 +310,6 @@ def type_switch(args):
         return all_list.select_(lambda item: MyList.load_file(item).is_normal).print()
     elif args["bach"]:
         return all_list.select_(lambda item: MyList.load_file(item).is_batch).print()
-    elif args["metabach"]:
-        return all_list.select_(lambda item: MyList.load_file(item).is_meta_batch).print()
     else:
         raise ValueError("不支持的type。")
 
