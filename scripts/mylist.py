@@ -12,6 +12,7 @@ Usage:
   list import <list_file>
   list type (normal|bach)
   list godel <list_file> [<seperator> [<template> [<max_step>]]] [debug]
+  list fullgodel <list_file> [<seperator> [<template> [<beam_len> [<max_step>]]]] [debug]
   list batch <index_file> [<seperator>] [<template>]
   list fullbatch <index_file> [<seperator>] [<template>]
   list <list_file> [<template>]
@@ -31,6 +32,7 @@ Options:
   <keyword>     要搜索的关键字 
   <new_name>    列表新的名称
   <template>    要输出的话的模板。如果没有指定$val，模板将会变成'对 <template> 测出了 $val'
+  <beam_len>    采样数量。默认为3
 """
 
 extra = """
@@ -38,17 +40,39 @@ extra = """
   list dedup <list_file>
   list rename <list_file> <new_name>
 """
-from random import randint, choice
+from random import randint, choice, sample
 from tempfile import template
 from typing import List
 from loguru import logger
 from docopt import docopt
 from pathlib import Path
 from string import Template
+from pprint import pformat
 import os
 import shutil
 import ring
 import sys
+
+def leafs(lst):
+    def rec_walk(root, root_path):
+        if isinstance(root, list):
+            for idx, val in enumerate(root):
+                yield from rec_walk(val, root_path + [idx])
+        else:
+            yield root_path
+    yield from rec_walk(lst, [])
+
+def get_lst(lst, path):
+    current = lst
+    for item in path:
+        current = current[item]
+    return current
+
+def set_lst(lst, path, value):
+    current = lst
+    for item in path[:-1]:
+        current = current[item]
+    current[path[-1]] = value
 
 def index(args):
     """index <item_index> | word <keyword>"""
@@ -64,33 +88,37 @@ def index(args):
     else:
         return None
 
-# class OneOf(list):
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
+class OneOf(list):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-#     def __str__(self):
-#         return f"OneOf[{','.join(str(x) for x in self)}]"
+    def __str__(self):
+        return f"OneOf[{','.join(str(x) for x in self)}]"
     
-#     def expand(self):
-#         v = choice(self)
-#         if hasattr(v, "expand"):
-#             v = v.expand()
-#             return v
-#         elif
-#         return [v]
+    def generate(self):
+        v = choice(self)
+        if hasattr(v, "generate"):
+            v = v.generate()
+        else:
+            v = [v]
+        return v
 
-# class All(list):
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
+class All(list):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-#     def __str__(self):
-#         return f"All[{','.join(str(x) for x in self)}]"
+    def __str__(self):
+        return f"All[{','.join(str(x) for x in self)}]"
     
-#     def expand(self):
-#         v_all = []
-#         for item in self:
-#             if hasattr(item, "expand"):
-#                 item = item.expand()
+    def generate(self):
+        v_all = []
+        for item in self:
+            if hasattr(item, "generate"):
+                item = item.generate()
+            else:
+                item = [item]
+            v_all.extend(item)
+        return v_all
 
 
 class MyList:
@@ -215,8 +243,52 @@ class MyList:
         else:
             return []
 
+    def __len__(self):
+        return len(self.as_list())
+
+    def single_tree(self, k):
+        return OneOf(self) if k > len(self) else OneOf(sample(self.as_list(), k))
+
+    def batch_tree(self, k):
+        result = []
+        for file in self:
+            sublist = MyList.load_file(file)
+            ls = All(sublist) if sublist.is_batch else sublist.single_tree(k)
+            if not ls:
+                ls = OneOf([file])
+            result.append(ls)
+        return All(result)
+
+    def expand_godel_tree(self, k):
+        if self.is_batch:
+            return self.batch_tree(k)
+        else:
+            return self.single_tree(k)
+
     def __str__(self) -> str:
         return self.print()
+
+    def godel_tree(self, remain_step, sample_num, debug):
+        if remain_step > 63:
+            remain_step = 63
+        root_obj = self.expand_godel_tree(sample_num)
+        leaf_paths = list(leafs(root_obj))
+        for _ in range(remain_step-1):
+            if debug:
+                print(root_obj)
+            extendable_paths = [path for path in leaf_paths if len(MyList.load_file(get_lst(root_obj, path)).lst) > 0]
+            if debug:
+                print(extendable_paths)
+            if not extendable_paths:
+                break
+            pick_path = choice(extendable_paths)
+            if debug:
+                print(pick_path)
+            value = MyList.load_file(get_lst(root_obj, pick_path)).expand_godel_tree(sample_num)
+            set_lst(root_obj, pick_path, value)
+            leaf_paths = list(leafs(root_obj))
+        return root_obj
+
 
     def godel(self, remain_step, debug):
         if remain_step > 63:
@@ -315,6 +387,9 @@ def type_switch(args):
     else:
         raise ValueError("不支持的type。")
 
+def show_syntax(args):
+    tree = MyList.load_file(args["<list_file>"]).godel_tree(args["<max_step>"], args["<beam_len>"], args["debug"])
+    return f'{tree} => {args["<seperator>"].join(tree.generate())}'
 
 all_funcs = {
     "add": lambda args: MyList.load_file(args["<list_file>"])
@@ -360,6 +435,7 @@ all_funcs = {
     "godel": lambda args: MyList.load_file(args["<list_file>"])
         .godel(args["<max_step>"], args["debug"])
         .print(number=False, item_seperator=args["<seperator>"]),
+    "fullgodel": show_syntax,
 }
 
 def trigger(opt: str, arguments):
@@ -376,11 +452,14 @@ def main(argv):
         arguments["<seperator>"] = ","
     if not arguments["<max_step>"]:
         arguments["<max_step>"] = 4
+    if not arguments["<beam_len>"]:
+        arguments["<beam_len>"] = 3
     if not arguments["<template>"]:
         arguments["<template>"] = "$val"
     elif "$val" not in arguments["<template>"]:
         arguments["<template>"] = f'对 {arguments["<template>"]} 测出了 $val'
-    arguments["<max_step>"] = int(arguments["<max_step>"])    
+    arguments["<max_step>"] = int(arguments["<max_step>"])
+    arguments["<beam_len>"] = int(arguments["<beam_len>"])   
     if arguments["<seperator>"].strip() == "off":
         arguments["<seperator>"] = ""
     for item in all_funcs:
