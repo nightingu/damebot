@@ -11,10 +11,10 @@ Usage:
   list remove-list <list_file>
   list import <list_file>
   list type (normal|bach)
-  list godel <list_file> [<seperator> [<max_step> [debug]]]
-  list batch <index_file> [<seperator>]
-  list fullbatch <index_file> [<seperator>]
-  list <list_file> 
+  list godel <list_file> [<seperator> [<template> [<max_step>]]] [debug]
+  list batch <index_file> [<seperator>] [<template>]
+  list fullbatch <index_file> [<seperator>] [<template>]
+  list <list_file> [<template>]
   list -h | --help
   list --version
 
@@ -30,7 +30,7 @@ Options:
   <item_index>  列表项目的索引，从1开始
   <keyword>     要搜索的关键字 
   <new_name>    列表新的名称
-
+  <template>    要输出的话的模板。如果没有指定$val，模板将会变成'对 <template> 测出了 $val'
 """
 
 extra = """
@@ -39,10 +39,12 @@ extra = """
   list rename <list_file> <new_name>
 """
 from random import randint, choice
+from tempfile import template
 from typing import List
 from loguru import logger
 from docopt import docopt
 from pathlib import Path
+from string import Template
 import os
 import shutil
 import ring
@@ -362,8 +364,9 @@ all_funcs = {
 
 def trigger(opt: str, arguments):
     result = all_funcs[opt](arguments)
+    template = Template(arguments["<template>"])
     if result is not None and result.strip() != "":
-        print(result, end="")
+        print(template.substitute(result, val=result), end="")
     return 0   
 
 
@@ -373,6 +376,10 @@ def main(argv):
         arguments["<seperator>"] = ","
     if not arguments["<max_step>"]:
         arguments["<max_step>"] = 4
+    if not arguments["<template>"]:
+        arguments["<template>"] = "$val"
+    elif "$val" not in arguments["<template>"]:
+        arguments["<template>"] = f'对 {arguments["<template>"]} 测出了 $val'
     arguments["<max_step>"] = int(arguments["<max_step>"])    
     if arguments["<seperator>"].strip() == "off":
         arguments["<seperator>"] = ""
