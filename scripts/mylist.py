@@ -11,7 +11,7 @@ Usage:
   list remove-list <list_file>
   list import <list_file>
   list type (normal|bach|metabach)
-  list godel <list_file> [<seperator> [<max_step>]]
+  list godel <list_file> [<seperator> [<max_step> [debug]]]
   list batch <index_file> [<seperator>]
   list fullbatch <index_file> [<seperator>]
   list <list_file> 
@@ -177,11 +177,13 @@ class MyList:
     def __str__(self) -> str:
         return self.print()
 
-    def godel(self, remain_step):
+    def godel(self, remain_step, debug):
         if remain_step > 63:
             remain_step = 63
         current = self.expand()
         for _ in range(remain_step-1):
+            if debug:
+                print(current)
             extendable_indexes = [i for i, name in enumerate(current) if len(MyList.load_file(name).lst) > 0]
             if not extendable_indexes:
                 break
@@ -312,7 +314,7 @@ all_funcs = {
         .remove_self(),
     "type": type_switch,
     "godel": lambda args: MyList.load_file(args["<list_file>"])
-        .godel(args["<max_step>"])
+        .godel(args["<max_step>"], args["debug"])
         .print(number=False, item_seperator=args["<seperator>"]),
 }
 
