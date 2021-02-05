@@ -1,8 +1,9 @@
 from asyncio import tasks
 from pprint import pprint
 import shutil
+import string
 from task_queue import AsyncQueue
-from tokenize import group
+from tokenize import Whitespace, group
 from typing import Dict
 import nonebot
 from nonebot import on_command, on_regex
@@ -177,6 +178,7 @@ class CommandBuilder:
         init_fn=None,
         hidden_result=False,
         command_env_async_factory=command_env_settings,
+        complete_match=True,
         **extra_kwargs):
         if sub_commands is None:
             sub_commands = []
@@ -219,6 +221,7 @@ class CommandBuilder:
         self.running_queues = defaultdict(AsyncQueue)
         self.reply_notify = reply_notify
         self.hidden_result = hidden_result
+        self.complete_match = complete_match
 
     def build_help(self, *help_prefixes, priority_delta=0, recursive=True, **help_args):
         logger.info(f"building help for '{self.cmd}' using '{self.help_short_async_factory.__name__}:{self.help_short}' and '{self.help_long_async_factory.__name__}:{self.help_long}'")
@@ -295,6 +298,8 @@ sub-commands:
                 msg = event.get_message().extract_plain_text()
                 logger.debug(f"got message '{msg}'")
                 _, origin_command, command_text = re.match(regex, msg, flags=re.MULTILINE | re.DOTALL).groups()
+                if self.complete_match and command_text and command_text[0] not in string.whitespace:
+                    return
                 command_text = command_text.strip()
                 logger.debug(f"got command text '{command_text}'")
                 group_id = None
