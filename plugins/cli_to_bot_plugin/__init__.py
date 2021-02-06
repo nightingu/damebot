@@ -121,4 +121,4 @@ async def user_group_memo(bot: "Bot", event: "Event", state: T_State):
     new_group_id = getattr(event, "group_id", None)
     logger.info("{}", json.dumps(event, default=serialize))
     if new_group_id is not None:
-        user_group_map.set(event.get_user_id(), new_group_id)
+        user_group_map.set(str(event.user_id), new_group_id)
