@@ -84,11 +84,19 @@ help|h: damebot! if you see だめ/ダメ/駄目, there must be something wrong.
         )
     ]
 )
+
+def has_message(event):
+    try:
+        event.get_plaintext()
+        return True
+    except ValueError:
+        return False
+
 root.build()
 root.build_help("h", "help")
 async def loggable(bot: "Bot", event: "Event", state: T_State):
     return event.is_tome() \
-        or any(event.get_plaintext().startswith(x) for x in nonebot.get_driver().config.command_start) \
+        or (has_message(event) and any(event.get_plaintext().startswith(x) for x in nonebot.get_driver().config.command_start)) \
         # or getattr(event, "sub_type", None) == "poke" \
         # or isinstance(event, PokeNotifyEvent) \
 
