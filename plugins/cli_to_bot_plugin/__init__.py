@@ -18,6 +18,7 @@ from workspace import *
 from collections import namedtuple
 import pathlib
 import docopt
+from nonebot.adapters.cqhttp import PokeNotifyEvent
 from scripts import download
 
 nonebot.get_driver()
@@ -86,7 +87,9 @@ help|h: damebot! if you see だめ/ダメ/駄目, there must be something wrong.
 root.build()
 root.build_help("h", "help")
 async def loggable(bot: "Bot", event: "Event", state: T_State):
-    return event.is_tome() or any(event.get_plaintext().startswith(x) for x in nonebot.get_driver().config.command_start)
+    return event.is_tome() \
+        or any(event.get_plaintext().startswith(x) for x in nonebot.get_driver().config.command_start) \
+        or isinstance(event, PokeNotifyEvent)
 
 memo = on_message(Rule(loggable), priority=64, block=False)
 
