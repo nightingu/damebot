@@ -8,6 +8,7 @@ import pwd
 import subprocess
 from workspace import *
 import workspace
+import user_group_map
 
 from json_store import JSONStore
 
@@ -113,6 +114,7 @@ def init_workspace():
     gid_map = JSONStore(CACHE / "gid_map.json", mode=0o644)
     user_main_group = JSONStore(CACHE / "user_group.json", mode=0o644)
     user_extra_group = JSONStore(CACHE / "user_extra_group.json", mode=0o644)
+    user_group_map.init()
     logger.debug(f"init default group {default_group}")
     ensure_group_sync(default_group)
     for group in gid_map:

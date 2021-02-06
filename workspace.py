@@ -6,5 +6,6 @@ PROJECT_SCRIPT = PROJECT_ROOT / "scripts"
 WORKSPACE = Path("/workspace")
 SHARED = WORKSPACE / "shared"
 CACHE = WORKSPACE / "cache"
+LOGS = CACHE / "logs"
 GROUP = WORKSPACE / "group"
 USER = WORKSPACE / "user"

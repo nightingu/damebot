@@ -24,6 +24,7 @@ from uid_gid import ensure_user, ensure_user_dir, execute_shell
 from workspace import *
 from enum import Enum, auto
 from collections import defaultdict
+import user_group_map
 
 class WorkspaceMode(Enum):
     serial = auto()
@@ -304,7 +305,7 @@ sub-commands:
                 logger.debug(f"got command text '{command_text}'")
                 group_id = None
                 if self.per_group:
-                    group_id = getattr(event, "group_id", None)
+                    group_id = getattr(event, "group_id", user_group_map.get(event.get_user_id()))
                     if group_id is None:
                         return
                 cwd = GROUP/str(group_id) if self.per_group else SHARED

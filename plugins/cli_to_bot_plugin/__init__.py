@@ -1,7 +1,12 @@
+from datetime import date, time
+import json
+from pprint import pformat
 import nonebot
 from nonebot import on_command
 from nonebot.adapters import Bot, Event
 from nonebot.matcher import Matcher
+from nonebot.plugin import on_message
+from nonebot.rule import Rule
 from nonebot.typing import T_State
 import asyncio
 from nonebot.log import logger
@@ -16,6 +21,7 @@ import docopt
 from scripts import download
 
 nonebot.get_driver()
+logger.add(LOGS / "command_log.log", rotation="1 day", filter=__name__)
 
 async def download_env(bot: Bot, event: Event, state: T_State, matcher: Matcher, regex: str):
     envs = await command_env_settings(bot, event, state, matcher, regex)
@@ -79,3 +85,27 @@ help|h: damebot! if you see だめ/ダメ/駄目, there must be something wrong.
 )
 root.build()
 root.build_help("h", "help")
+async def loggable(bot: "Bot", event: "Event", state: T_State):
+    return event.is_tome() or any(event.get_plaintext().startswith(x) for x in nonebot.get_driver().config.command_start)
+
+memo = on_message(Rule(loggable), priority=64, block=False)
+
+def serialize(obj):
+    """JSON serializer for objects not serializable by default json code"""
+
+    if isinstance(obj, date):
+        serial = obj.isoformat()
+        return serial
+
+    if isinstance(obj, time):
+        serial = obj.isoformat()
+        return serial
+
+    return obj.__dict__
+
+@memo.handle()
+async def user_group_memo(bot: "Bot", event: "Event", state: T_State):
+    new_group_id = getattr(event, "group_id", None)
+    logger.info("{}", json.dumps(event, default=serialize))
+    if new_group_id is not None:
+        user_group_map.set(event.get_user_id(), new_group_id)
