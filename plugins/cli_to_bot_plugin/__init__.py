@@ -89,7 +89,9 @@ root.build_help("h", "help")
 async def loggable(bot: "Bot", event: "Event", state: T_State):
     return event.is_tome() \
         or any(event.get_plaintext().startswith(x) for x in nonebot.get_driver().config.command_start) \
-        or isinstance(event, PokeNotifyEvent)
+        or getattr(event, "sub_type", None) == "poke" \
+        or isinstance(event, PokeNotifyEvent) \
+
 
 memo = on_message(Rule(loggable), priority=64, block=False)
 
