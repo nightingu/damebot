@@ -94,10 +94,11 @@ jobs:
           port: 22
           script: |
                curl -v --data-urlencode "group_id=$GROUPNO" --data-urlencode "message=$MSG" "http://127.0.0.1:5700/send_group_msg"
+               curl -v --data-urlencode "user_id=$UID1" --data-urlencode "message=$MSG" "http://127.0.0.1:5700/send_msg"
           script_stop: true
-          envs: GROUPNO,MSG
+          envs: GROUPNO,MSG,UID1
         env:
           GROUPNO: ${{ secrets.NOTIFY_GROUP_ID }}
           MSG: ${{ format('damebot updated! {0} >> {1}', fromJSON(steps.get_latest_release.outputs.data).repository.latestRelease.name, fromJSON(steps.get_latest_release.outputs.data).repository.latestRelease.description) }}
-  
+          UID1: ${{ secrets.NOTIFY_USER_ID_1 }}
             
