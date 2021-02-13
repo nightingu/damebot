@@ -15,6 +15,7 @@ Usage:
   list fullgodel <list_file> [<seperator> [<template> [<beam_len> [<max_step>]]]] [debug]
   list batch <index_file> [<seperator>] [<template>]
   list fullbatch <index_file> [<seperator>] [<template>]
+  list story <batch_item>...
   list <list_file> [<template>]
   list -h | --help
   list --version
@@ -436,6 +437,7 @@ all_funcs = {
         .godel(args["<max_step>"], args["debug"])
         .print(number=False, item_seperator=args["<seperator>"]),
     "fullgodel": show_syntax,
+    "story": lambda args: MyList(Path(".temp"), args["<batch_item>"], is_batch=True).godel(4, False).print(number=False, item_seperator=""), 
 }
 
 def trigger(opt: str, arguments):
