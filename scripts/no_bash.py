@@ -26,6 +26,7 @@ WHITELIST = [
     "printenv",
     "mv","cp","ln",
     "touch",
+    "ping",
     "tar","unzip","rm",
     "cat","base64",
     "grep","shuf","head","tail","cut",
