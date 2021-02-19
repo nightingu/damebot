@@ -18,4 +18,4 @@ import requests
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='haiku 0.0.1', options_first=True)
     if arguments["<keywords>"]:
-        print(requests.get('http://zhnlp:5000/', params={"keywords": ",".join(arguments["<keywords>"])}).text)
+        print(requests.get('http://zhnlp:5000/no_self', params={"keywords": ",".join(arguments["<keywords>"])}).text)

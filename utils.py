@@ -357,6 +357,7 @@ sub-commands:
                 extra_msgs = {}
                 if self.hidden_result:
                     extra_msgs.update({"message_type": "private"})
+                logger.info(f"{msg} ===> {output}")
                 await matcher.send(output, **extra_msgs)
             matcher.command_builder = self
         matcher_subs = [x.build(build_sub=recursive, recursive=recursive) for x in self.sub_commands] if build_sub else None

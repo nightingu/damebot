@@ -23,6 +23,7 @@ from scripts import download
 
 nonebot.get_driver()
 logger.add(LOGS / "command_log.log", rotation="1 day", filter=__name__)
+logger.add(LOGS / "running_log.log", rotation="1 day")
 
 async def download_env(bot: Bot, event: Event, state: T_State, matcher: Matcher, regex: str):
     envs = await command_env_settings(bot, event, state, matcher, regex)
