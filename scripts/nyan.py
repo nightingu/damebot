@@ -37,7 +37,6 @@ if __name__ == '__main__':
                 pinyin_zip.append((pinyin_item, pinyin_item))
                 text_i += len(pinyin_item)
         nyan_text_list = []
-        print(pinyin_zip)
         for pinyin, item in pinyin_zip:
             if pinyin == item:
                 # it is not pinyin
@@ -46,7 +45,6 @@ if __name__ == '__main__':
                 sim = SequenceMatcher(None, pinyin, miao_pinyin).ratio()
                 nyan_item = choices(['喵', item], weights=[sim, 1-sim], k=1)[0]
                 nyan_text_list.append(nyan_item)
-        print(nyan_text_list)
         nyan_index = len(nyan_text_list)-2 if pinyin_zip[-1][0] == pinyin_zip[-1][1] else len(nyan_text_list)-1
         if nyan_text_list[nyan_index] != '喵':
             nyan_text_list[nyan_index+1:nyan_index+1] = ['喵']
