@@ -89,6 +89,13 @@ help|h: damebot! if you see だめ/ダメ/駄目, there must be something wrong.
             priority_delta=-1, 
             per_group=False,
             workespace_mode=WorkspaceMode.serial,
+        ),
+        CommandBuilder(
+            script(PROJECT_SCRIPT / "nyan.py"), 
+            "nyan", "miao", "m",
+            priority_delta=-1, 
+            per_group=False,
+            workespace_mode=WorkspaceMode.serial,
         )
     ]
 )
