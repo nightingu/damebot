@@ -11,7 +11,7 @@ services:
   zhnlp:
     networks: 
       - my_network
-    image: ledenel/zh-nlp:main
+    image: ledenel/zh-nlp-full:main
     # ports:
     #   - "9997:5000"
     
