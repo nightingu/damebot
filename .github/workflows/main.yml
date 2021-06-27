@@ -79,6 +79,7 @@ jobs:
           script: |
             mkdir --parents damebot_workspace
             cd app-damebot
+            docker pull ledenel/zh-nlp-full:main
             docker-compose up -d --build
             sleep 5
             docker-compose logs | tee >(cat 1>&2) | (! grep ERROR)
