@@ -10,6 +10,8 @@ put：
 Usage:
   haiku on <keywords>...
   haiku put <name> <template>
+  haiku all
+  haiku view <name>
   haiku del <name>
   haiku <name> <keywords>...
 
@@ -56,7 +58,7 @@ def check_template(mode_str):
         mode_mask_max_nums.append(mode_mask_max)
     assert sum(mode_mask_max_nums) <= 100, "模板要求的内容太多了。请限制在100个字符以内"
 
-
+import glob
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='haiku 0.0.1 俳句多功能步兵车，支持定制任务', options_first=True)
     if arguments["on"]:
@@ -66,6 +68,12 @@ if __name__ == '__main__':
       check_template(arguments["<template>"])
       with open(f"{arguments['<name>']}.txt", "w") as f:
         f.write(arguments["<template>"].strip())
+    elif arguments["all"]:
+      print(" ".join(x[:-4] for x in glob.glob("*.txt")))
+    elif arguments["view"]:
+      with open(f"{arguments['<name>']}.txt", "r") as f:
+        template = f.read()
+      print(template)
     elif arguments["del"]:
       os.remove(f"{arguments['<name>']}.txt")
     else: # specified <name> <keywords> to generate by templates
