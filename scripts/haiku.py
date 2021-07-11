@@ -13,8 +13,7 @@ Usage:
   haiku all
   haiku view <name>
   haiku del <name>
-  haiku rand <name> <keywords>...
-  haiku <name> <keywords>...
+  haiku [rand] <name> [<keywords>...]
 
 Options:
   -h --help     Show this screen.
@@ -59,7 +58,9 @@ def check_template(mode_str):
         mode_keyword_max_nums.append(mode_keyword_max)
         mode_mask_max_nums.append(mode_mask_max)
     assert sum(mode_mask_max_nums) <= 100, "模板要求的内容太多了。请限制在100个字符以内"
+    return mode_matched
 
+from itertools import zip_longest
 import glob
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='haiku 0.0.1 俳句多功能步兵车，支持定制任务', options_first=True)
@@ -81,8 +82,10 @@ if __name__ == '__main__':
     else: # specified <name> <keywords> to generate by templates
       with open(f"{arguments['<name>']}.txt", "r") as f:
         template = f.read()
-      keywords = arguments["<keywords>"]
+      keywords = arguments["<keywords>"] or []
+      numbers = check_template(template)
       if arguments["rand"]:
+        keywords = [key or "" for key, _ in zip_longest(keywords, numbers)]
         random.shuffle(keywords)
       assert template.strip(), "模板没有内容，无法生成"
       print(requests.get('http://zhnlp:5000/no_self', params={
