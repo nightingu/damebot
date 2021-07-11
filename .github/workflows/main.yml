@@ -80,6 +80,7 @@ jobs:
             mkdir --parents damebot_workspace
             cd app-damebot
             docker pull ledenel/zh-nlp-full:main
+            docker-compose logs > $(date +%Y-%m-%d-%H-%M-%S).log
             docker-compose up -d --build
             sleep 5
             docker-compose logs | tee >(cat 1>&2) | (! grep ERROR)
