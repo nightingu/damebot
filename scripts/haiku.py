@@ -13,6 +13,7 @@ Usage:
   haiku all
   haiku view <name>
   haiku del <name>
+  haiku rand <name> <keywords>...
   haiku <name> <keywords>...
 
 Options:
@@ -27,6 +28,7 @@ from docopt import docopt
 import requests
 import os
 import re
+import random
 number_pattern = re.compile("([0-9]+)(\\-([0-9]+))?(\\-([0-9]+))?")
 
 def check_template(mode_str):
@@ -79,9 +81,12 @@ if __name__ == '__main__':
     else: # specified <name> <keywords> to generate by templates
       with open(f"{arguments['<name>']}.txt", "r") as f:
         template = f.read()
+      keywords = arguments["<keywords>"]
+      if arguments["rand"]:
+        random.shuffle(keywords)
       assert template.strip(), "模板没有内容，无法生成"
       print(requests.get('http://zhnlp:5000/no_self', params={
-        "keywords": ",".join(arguments["<keywords>"]),
+        "keywords": ",".join(keywords),
         "template": template.strip()
       }).text)
 
