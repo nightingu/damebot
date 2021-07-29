@@ -13,7 +13,7 @@ Usage:
   haiku all
   haiku view <name>
   haiku del <name>
-  haiku [rand] <name> [<keywords>...]
+  haiku [rand] [hard] <name> [<keywords>...]
 
 Options:
   -h --help     Show this screen.
@@ -90,7 +90,9 @@ if __name__ == '__main__':
       assert template.strip(), "模板没有内容，无法生成"
       print(requests.get('http://zhnlp:5000/no_self', params={
         "keywords": ",".join(keywords),
-        "template": template.strip()
+        "template": template.strip(),
+        "mode": "hard" if arguments["hard"] else "soft",
+        "top_rate": "0.99",
       }).text)
 
       
