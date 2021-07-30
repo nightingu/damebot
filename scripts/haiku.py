@@ -84,15 +84,13 @@ if __name__ == '__main__':
         template = f.read()
       keywords = arguments["<keywords>"] or []
       numbers = check_template(template)
-      if arguments["rand"]:
-        keywords = [key or "" for key, _ in zip_longest(keywords, numbers)]
-        random.shuffle(keywords)
       assert template.strip(), "模板没有内容，无法生成"
       print(requests.get('http://zhnlp:5000/no_self', params={
         "keywords": ",".join(keywords),
         "template": template.strip(),
         "mode": "hard" if arguments["hard"] else "soft",
         "top_rate": "0.99",
+        "rand": "on" if arguments["rand"] else "off",
       }).text)
 
       
