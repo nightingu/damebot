@@ -279,6 +279,83 @@ sub-commands:
         logger.info(f"builded help")
         return (matcher, sub_matchers) if sub_matchers else matcher     
 
+    async def cmd_handler(self, bot: Bot, event: Event, state: T_State, matcher: Matcher, cmd=None):
+        # get real command content
+        regex=self.regex_
+        logger.debug(f"event: {event}")
+        logger.debug(f"state: {state}")
+        msg = event.get_message().extract_plain_text()
+        logger.debug(f"got message '{msg}'")
+        if cmd is None:
+            _, origin_command, command_text = re.match(regex, msg, flags=re.MULTILINE | re.DOTALL).groups()
+            if self.complete_match and command_text and command_text[0] not in string.whitespace:
+                return
+            command_text = command_text.strip()
+        else:
+            command_text = cmd
+        logger.debug(f"got command text '{command_text}'")
+        group_id = None
+        if self.per_group:
+            group_id = getattr(event, "group_id", user_group_map.get(event.get_user_id()))
+            if group_id is None:
+                return
+        cwd = GROUP/str(group_id) if self.per_group else SHARED
+        os.makedirs(cwd, exist_ok=True)
+        current_user = self.run_as if not self.per_group else f"{self.run_as}g{group_id}"
+        main_group = self.command_safe
+        extra_group = ["damebot"]
+        if self.workspace_mode != WorkspaceMode.none:
+            cwd = cwd / self.command_safe
+        cmd = " ".join([self.cmd, command_text])
+        env_futures = await asyncio.gather(self.command_env_async_factory(bot, event, state, matcher, regex), return_exceptions=True)
+        env_vars = env_futures[0]
+        if isinstance(env_vars, Exception):
+            await matcher.send(dame(str(env_vars)))
+            raise env_vars
+        umask_int = None
+        if self.workspace_mode == WorkspaceMode.none or self.workspace_mode == WorkspaceMode.plaintext:
+            main_group, extra_group = extra_group[0], [main_group] + extra_group[1:]
+        if self.per_group:
+            extra_group.append(f"g{group_id}")
+        await ensure_user(current_user, main_group, extra_group) 
+        if self.workspace_mode != WorkspaceMode.none:
+            ensure_user_dir(cwd, current_user, main_group) 
+        if self.workspace_mode == WorkspaceMode.concurrent:
+            umask_int = 0o002
+            os.chmod(cwd, 0o775)
+        elif self.workspace_mode == WorkspaceMode.plaintext:
+            umask_int = 0o002
+            os.chmod(cwd, 0o775) 
+            os.system(f"chgrp {extra_group[0]} {cwd}")
+        elif self.workspace_mode == WorkspaceMode.none:
+            umask_int = 0o002
+            os.chmod(cwd, 0o775)     
+        task = execute(
+            cmd,
+            user=current_user,
+            main_group=main_group,
+            extra_group=extra_group,
+            umask=umask_int,
+            cwd=cwd,
+            env_vars=env_vars
+        )
+        if self.workspace_mode == WorkspaceMode.serial:
+            queue = self.running_queues[cwd]
+            task = queue.run(task)
+        output = await task
+        if self.reply_notify:
+            if hasattr(event, "group_id") and hasattr(event, "message_id"):
+                # reply Mode
+                output = MessageSegment.reply(event.message_id) + output
+            else:
+                output = MessageSegment.at(event.get_user_id()) + "\n" + output
+        extra_msgs = {}
+        if self.hidden_result:
+            extra_msgs.update({"message_type": "private"})
+        logger.info(f"{msg} ===> {output}")
+        await matcher.send(output, **extra_msgs)
+
+
     def build(self, build_sub=True, recursive=False) -> Matcher:
         self.init_fn()
         logger.info(f"building '{self.cmd}'")
@@ -289,80 +366,13 @@ sub-commands:
             config = nonebot.get_driver().config
             command_start = config.command_start
             regex = f"^({'|'.join(command_start)})({'|'.join(self.cmd_in_dice)})(.*)$"
+            self.regex_ = regex
             matcher = on_regex(regex, flags=re.MULTILINE, block=True, priority=self.priority, **self.extra_kwargs)
             logger.info(f"building command matcher with '{regex}', prior={self.priority}, kwargs={self.extra_kwargs}")
             @matcher.handle()
-            async def cmd_handler(bot: Bot, event: Event, state: T_State, matcher: Matcher):
-                # get real command content
-                logger.debug(f"event: {event}")
-                logger.debug(f"state: {state}")
-                msg = event.get_message().extract_plain_text()
-                logger.debug(f"got message '{msg}'")
-                _, origin_command, command_text = re.match(regex, msg, flags=re.MULTILINE | re.DOTALL).groups()
-                if self.complete_match and command_text and command_text[0] not in string.whitespace:
-                    return
-                command_text = command_text.strip()
-                logger.debug(f"got command text '{command_text}'")
-                group_id = None
-                if self.per_group:
-                    group_id = getattr(event, "group_id", user_group_map.get(event.get_user_id()))
-                    if group_id is None:
-                        return
-                cwd = GROUP/str(group_id) if self.per_group else SHARED
-                os.makedirs(cwd, exist_ok=True)
-                current_user = self.run_as if not self.per_group else f"{self.run_as}g{group_id}"
-                main_group = self.command_safe
-                extra_group = ["damebot"]
-                if self.workspace_mode != WorkspaceMode.none:
-                    cwd = cwd / self.command_safe
-                cmd = " ".join([self.cmd, command_text])
-                env_futures = await asyncio.gather(self.command_env_async_factory(bot, event, state, matcher, regex), return_exceptions=True)
-                env_vars = env_futures[0]
-                if isinstance(env_vars, Exception):
-                    await matcher.send(dame(str(env_vars)))
-                    raise env_vars
-                umask_int = None
-                if self.workspace_mode == WorkspaceMode.none or self.workspace_mode == WorkspaceMode.plaintext:
-                    main_group, extra_group = extra_group[0], [main_group] + extra_group[1:]
-                if self.per_group:
-                    extra_group.append(f"g{group_id}")
-                await ensure_user(current_user, main_group, extra_group) 
-                if self.workspace_mode != WorkspaceMode.none:
-                    ensure_user_dir(cwd, current_user, main_group) 
-                if self.workspace_mode == WorkspaceMode.concurrent:
-                    umask_int = 0o002
-                    os.chmod(cwd, 0o775)
-                elif self.workspace_mode == WorkspaceMode.plaintext:
-                    umask_int = 0o002
-                    os.chmod(cwd, 0o775) 
-                    os.system(f"chgrp {extra_group[0]} {cwd}")
-                elif self.workspace_mode == WorkspaceMode.none:
-                    umask_int = 0o002
-                    os.chmod(cwd, 0o775)     
-                task = execute(
-                    cmd,
-                    user=current_user,
-                    main_group=main_group,
-                    extra_group=extra_group,
-                    umask=umask_int,
-                    cwd=cwd,
-                    env_vars=env_vars
-                )
-                if self.workspace_mode == WorkspaceMode.serial:
-                    queue = self.running_queues[cwd]
-                    task = queue.run(task)
-                output = await task
-                if self.reply_notify:
-                    if hasattr(event, "group_id") and hasattr(event, "message_id"):
-                        # reply Mode
-                        output = MessageSegment.reply(event.message_id) + output
-                    else:
-                        output = MessageSegment.at(event.get_user_id()) + "\n" + output
-                extra_msgs = {}
-                if self.hidden_result:
-                    extra_msgs.update({"message_type": "private"})
-                logger.info(f"{msg} ===> {output}")
-                await matcher.send(output, **extra_msgs)
+            async def my_cmd_handler(bot: Bot, event: Event, state: T_State, matcher: Matcher):
+                result = await self.cmd_handler(bot=bot, event=event, state=state, matcher=matcher)
+                return result
             matcher.command_builder = self
         matcher_subs = [x.build(build_sub=recursive, recursive=recursive) for x in self.sub_commands] if build_sub else None
         logger.info(f"builded '{self.cmd}'")
