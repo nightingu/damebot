@@ -85,7 +85,7 @@ help|h: damebot! if you see だめ/ダメ/駄目, there must be something wrong.
         ),
         CommandBuilder(
             script(PROJECT_SCRIPT / "haiku.py"), 
-            "paiju", "pj",
+            "paiju", "pj", "haiku",
             priority_delta=-1, 
             per_group=False,
             workespace_mode=WorkspaceMode.serial,

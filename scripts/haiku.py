@@ -10,6 +10,8 @@ put：
 Usage:
   haiku on <keywords>...
   haiku put <name> <template>
+  haiku debug on
+  haiku debug off
   haiku all
   haiku view <name>
   haiku del <name>
@@ -79,9 +81,18 @@ if __name__ == '__main__':
       print(template)
     elif arguments["del"]:
       os.remove(f"{arguments['<name>']}.txt")
+    elif arguments["debug"]:
+      if arguments["on"]:
+        with open(f'{os.environ["BOT_GROUP_ID"]}.debug', "w") as f:
+          pass
+      elif arguments["off"]:
+        os.remove(f'{os.environ["BOT_GROUP_ID"]}.debug')
+      else:
+        raise ValueError("debug模式只能选择on或者off")
     else: # specified <name> <keywords> to generate by templates
       with open(f"{arguments['<name>']}.txt", "r") as f:
         template = f.read()
+      debug_switch = "BOT_GROUP_ID" in os.environ and os.path.exists(f'{os.environ["BOT_GROUP_ID"]}.debug')
       keywords = arguments["<keywords>"] or []
       numbers = check_template(template)
       assert template.strip(), "模板没有内容，无法生成"
@@ -91,6 +102,7 @@ if __name__ == '__main__':
         "mode": "hard" if arguments["hard"] else "soft",
         "top_rate": "0.99",
         "rand": "on" if arguments["rand"] else "off",
+        "debug": "on" if debug_switch else "off",
       }).text)
 
       
