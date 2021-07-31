@@ -353,7 +353,11 @@ sub-commands:
                     task = queue.run(task)
                 output = await task
                 if self.reply_notify:
-                    output = MessageSegment.at(event.get_user_id()) + output
+                    if hasattr(event, "group_id") and hasattr(event, "message_id"):
+                        # reply Mode
+                        output = MessageSegment.reply(event.message_id) + output
+                    else:
+                        output = MessageSegment.at(event.get_user_id()) + "\n" + output
                 extra_msgs = {}
                 if self.hidden_result:
                     extra_msgs.update({"message_type": "private"})
