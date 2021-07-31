@@ -8,10 +8,10 @@ on：体验默认俳句。
 put：
 
 Usage:
-  haiku on <keywords>...
-  haiku put <name> <template>
   haiku debug on
   haiku debug off
+  haiku on <keywords>...
+  haiku put <name> <template>
   haiku all
   haiku view <name>
   haiku del <name>
