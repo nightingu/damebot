@@ -8,10 +8,10 @@ on：体验默认俳句。
 put：
 
 Usage:
-  haiku debug on
-  haiku debug off
   haiku on <keywords>...
   haiku put <name> <template>
+  haiku debug on
+  haiku debug off
   haiku all
   haiku view <name>
   haiku del <name>
@@ -66,9 +66,7 @@ from itertools import zip_longest
 import glob
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='haiku 0.0.1 俳句多功能步兵车，支持定制任务', options_first=True)
-    if arguments["on"]:
-      print(requests.get('http://zhnlp:5000/no_self', params={"keywords": ",".join(arguments["<keywords>"])}).text)
-    elif arguments["put"]:
+    if arguments["put"]:
       assert any(ch.isdigit() for ch in arguments["<template>"]), "应当至少在模板中指定一个数字来定制功能。"
       check_template(arguments["<template>"])
       with open(f"{arguments['<name>']}.txt", "w") as f:
@@ -89,6 +87,8 @@ if __name__ == '__main__':
         os.remove(f'{os.environ["BOT_GROUP_ID"]}.debug')
       else:
         raise ValueError("debug模式只能选择on或者off")
+    elif arguments["on"]:
+      print(requests.get('http://zhnlp:5000/no_self', params={"keywords": ",".join(arguments["<keywords>"])}).text)
     else: # specified <name> <keywords> to generate by templates
       with open(f"{arguments['<name>']}.txt", "r") as f:
         template = f.read()
