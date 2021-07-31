@@ -90,7 +90,7 @@ def set_ids(user_name, umask=None):
             os.umask(umask)
     return _set_id
 
-async def execute(cmd, cwd=SHARED, user="commander", main_group="damebot", extra_group=tuple(), env_vars=None, umask=None):
+async def execute(cmd, cwd=SHARED, user="commander", main_group="damebot", extra_group=tuple(), env_vars=None, umask=None, empty_hint=True):
     if env_vars is None:
         env_vars = {}
     os.makedirs(cwd, exist_ok=True)
@@ -113,9 +113,10 @@ async def execute(cmd, cwd=SHARED, user="commander", main_group="damebot", extra
     # also can use proc.returncode
         output = stdout.decode()
         if output.strip() == "":
-            output = stderr.decode()
-            if output.strip() == "":
-                output = f"'{cmd}' できだ" + "！" * randint(1,3)
+            output = stderr.decode().strip()
+            if empty_hint:
+                if output.strip() == "":
+                    output = f"'{cmd}' できだ" + "！" * randint(1,3)
     else:
         err_short = await summary(stdout.decode().strip() + " " + stderr.decode().strip())
         output = dame(err_short)
@@ -141,9 +142,11 @@ async def command_env_settings(bot: Bot, event: Event, state: T_State, matcher: 
     env_vars["BOT_EVENT_TYPE"] = str(event.get_type())
     msg = str(event.get_plaintext())
     env_vars["BOT_EVENT_MESSAGE"] = msg
-    _, origin_command, command_text = re.match(regex, msg, flags=re.MULTILINE | re.DOTALL).groups()
-    env_vars["BOT_EVENT_COMMAND"] = origin_command
-    env_vars["BOT_EVENT_COMMAND_ARGS"] = command_text
+    match = re.match(regex, msg, flags=re.MULTILINE | re.DOTALL)
+    if match:
+        _, origin_command, command_text = match.groups()
+        env_vars["BOT_EVENT_COMMAND"] = origin_command
+        env_vars["BOT_EVENT_COMMAND_ARGS"] = command_text
     group_id = getattr(event, "group_id", None)
     if group_id is not None:
         env_vars["BOT_GROUP_ID"] = str(group_id)
@@ -279,20 +282,19 @@ sub-commands:
         logger.info(f"builded help")
         return (matcher, sub_matchers) if sub_matchers else matcher     
 
-    async def cmd_handler(self, bot: Bot, event: Event, state: T_State, matcher: Matcher, cmd=None):
-        # get real command content
+    async def cmd_run(self, bot: Bot, event: Event, state: T_State, matcher: Matcher, cmd_replaced=None):
         regex=self.regex_
         logger.debug(f"event: {event}")
         logger.debug(f"state: {state}")
         msg = event.get_message().extract_plain_text()
         logger.debug(f"got message '{msg}'")
-        if cmd is None:
+        if cmd_replaced is None:
             _, origin_command, command_text = re.match(regex, msg, flags=re.MULTILINE | re.DOTALL).groups()
             if self.complete_match and command_text and command_text[0] not in string.whitespace:
                 return
             command_text = command_text.strip()
         else:
-            command_text = cmd
+            command_text = cmd_replaced
         logger.debug(f"got command text '{command_text}'")
         group_id = None
         if self.per_group:
@@ -337,8 +339,14 @@ sub-commands:
             extra_group=extra_group,
             umask=umask_int,
             cwd=cwd,
-            env_vars=env_vars
+            env_vars=env_vars,
+            empty_hint=cmd_replaced is None
         )
+        return cwd, msg, task
+
+    async def cmd_handler(self, bot: Bot, event: Event, state: T_State, matcher: Matcher, cmd=None):
+        # get real command content
+        cwd, msg, task = await self.cmd_run(bot=bot, event=event, state=state, matcher=matcher, cmd_replaced=cmd)
         if self.workspace_mode == WorkspaceMode.serial:
             queue = self.running_queues[cwd]
             task = queue.run(task)

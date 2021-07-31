@@ -96,7 +96,14 @@ help|h: damebot! if you see だめ/ダメ/駄目, there must be something wrong.
             priority_delta=-1, 
             per_group=False,
             workespace_mode=WorkspaceMode.serial,
-        )
+        ),
+        CommandBuilder(
+            script(PROJECT_SCRIPT / "auto.py"), 
+            "auto", "autosetting",
+            priority_delta=-1, 
+            per_group=True,
+            workespace_mode=WorkspaceMode.concurrent,
+        ),
     ]
 )
 
@@ -137,3 +144,26 @@ async def user_group_memo(bot: "Bot", event: "Event", state: T_State):
     logger.info("{}", json.dumps(event, default=serialize))
     if new_group_id is not None:
         user_group_map.set(str(event.user_id), new_group_id)
+
+async def always_true(bot: "Bot", event: "Event", state: T_State):
+    return True
+
+auto_reply = on(rule=Rule(always_true), priority=1048576, block=False)
+
+@auto_reply.handle()
+async def auto_reply_using_cmd(bot: "Bot", event: "Event", state: T_State, matcher: Matcher):
+    message_raw = event.get_message().extract_plain_text()
+    # logger.debug(f"{[c.cmd for c in root.sub_commands]}")
+    auto_command = [c for c in root.sub_commands if "auto" in c.cmd_in_dice][0]
+    cwd, msg, task = await auto_command.cmd_run(bot=bot, event=event, state=state, matcher=matcher, cmd_replaced=f"gen '{message_raw}'")
+    command_line_needed = await task
+    command_line_needed = command_line_needed.strip()
+    if command_line_needed:
+        logger.info(f"auto doing '{command_line_needed}'")
+        main_cmd, args = command_line_needed.split(maxsplit=1)
+        main_cmd_object = [c for c in root.sub_commands if main_cmd in c.cmd_in_dice][0]
+
+        result = await main_cmd_object.cmd_handler(bot=bot, event=event, state=state, matcher=matcher, cmd=args)
+        return result
+
+
