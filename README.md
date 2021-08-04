@@ -29,11 +29,19 @@ Aimed at easy deploy and development.
 
 ## 在线云开发
 
-点击 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/nightingu/damebot) 进入IDE。
+有疑问可以加入测试群 726525232
+
+![1628074583664_temp_qrcode_share_9993](https://user-images.githubusercontent.com/14890194/128170078-bc98d90c-fac9-4544-b388-f6d21f6191d3.png)
+
+请先Fork本项目。将Pull Request的方式提交后，你（应当）可以在测试群收到提示信息。
+
+你可以参考 [Github 贡献指南](https://docs.github.com/cn/github/collaborating-with-pull-requests/getting-started/about-collaborative-development-models) 
+来了解如何在Github上进行协作，使用git进行commit、push以及基于Fork和Pull Request贡献代码。
+
+使用连接 `https://gitpod.io/#https://github.com/<你的用户名>/damebot` 进入IDE。
 
 当bot加载好时，下方terminal会提示open xxx to test damebot，在浏览器中打开即可测试damebot。
 
 > 当你修改代码并保存时，bot会自动重新加载。这时候请重新等待url出现后，才说明bot已经加载好，再进行测试。
 
 需要查看调试信息时，切换IDE右下角的Terminal即可看到bot所输出的调试信息。在开发中默认的日志级别为DEBUG。
-
