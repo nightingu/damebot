@@ -33,7 +33,7 @@ Aimed at easy deploy and development.
 
 ![temp_qrcode_share](https://user-images.githubusercontent.com/14890194/128171280-07441de8-c952-47ad-98cb-bf65d3c9a42c.png)
 
-请先Fork本项目。将Pull Request的方式提交后，你（应当）可以在测试群收到提示信息。
+请先Fork本项目。将Pull Request提交到本项目后，你（应当）可以在测试群收到提示信息。
 
 你可以参考 [Github 贡献指南](https://docs.github.com/cn/github/collaborating-with-pull-requests/getting-started/about-collaborative-development-models) 
 来了解如何在Github上进行协作，使用git进行commit、push以及基于Fork和Pull Request贡献代码。
