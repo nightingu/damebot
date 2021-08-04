@@ -27,3 +27,11 @@ Aimed at easy deploy and development.
 
 项目提供github actions来在项目Release的时候连接特定的远程主机，在当前用户目录下建立app-damebot目录，并使用Release的代码执行步骤3，以后便不再需要手动部署。
 
+## 在线云开发
+
+点击 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/nightingu/damebot) 进入IDE。
+
+当bot加载好时，下方terminal会提示open xxx to test damebot，在浏览器中打开即可测试damebot。
+
+> 当你修改代码并保存时，bot会自动重新加载。这时候请重新等待url出现后，才说明bot已经加载好，再进行测试。
+
