@@ -11,7 +11,7 @@ tasks:
     command: |
       watchmedo auto-restart -d . -p "*.py;**/*.py" -R -- docker-compose up --build
   - command: |
-      echo open $(gp url 8081)/test/#/frontend to test nonebot!
+      watchmedo auto-restart -d . -p "*.py;**/*.py" -R -- bash hint.sh
 
 ports:
   - port: 3000-8999
