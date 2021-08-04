@@ -12,7 +12,7 @@ tasks:
       watchmedo auto-restart -d . -p "*.py;**/*.py" -R -- docker-compose up --build
   - init: |
       pip install -r dev-requirements.txt
-  - command: |
+    command: |
       watchmedo auto-restart -d . -p "*.py;**/*.py" -R -- bash hint.sh
 
 ports:
