@@ -35,3 +35,5 @@ Aimed at easy deploy and development.
 
 > 当你修改代码并保存时，bot会自动重新加载。这时候请重新等待url出现后，才说明bot已经加载好，再进行测试。
 
+需要查看调试信息时，切换IDE右下角的Terminal即可看到bot所输出的调试信息。在开发中默认的日志级别为DEBUG。
+
