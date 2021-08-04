@@ -31,7 +31,7 @@ Aimed at easy deploy and development.
 
 有疑问可以加入测试群 726525232
 
-![1628074583664_temp_qrcode_share_9993](https://user-images.githubusercontent.com/14890194/128170078-bc98d90c-fac9-4544-b388-f6d21f6191d3.png)
+![1628074583664_temp_qrcode_share_9993](https://user-images.githubusercontent.com/14890194/128170078-bc98d90c-fac9-4544-b388-f6d21f6191d3.png | width=350)
 
 请先Fork本项目。将Pull Request的方式提交后，你（应当）可以在测试群收到提示信息。
 
