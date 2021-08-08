@@ -34,7 +34,7 @@ class WhooshQueryModule:
         self.name = name
         self.properties = JSONStore(f"{name}")
         self.properties.setdefault("type", "whoosh")
-        self.properties.setdefault("extract", "type:subtree NOT pos:PUNCT text_len:7")
+        self.properties.setdefault("extract", "type:subtree contains_punct:no contains_ascii:no text_len:7")
         self.properties.setdefault("template", "pj on '' '{}' ''")
         self.properties.setdefault("survival", 1)
         self.properties.setdefault("period", timedelta(hours=0.5))
