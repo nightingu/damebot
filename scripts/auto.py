@@ -34,11 +34,11 @@ class WhooshQueryModule:
         self.name = name
         self.properties = JSONStore(f"{name}")
         default_dict = {
-            "type": "whoosh"
-            "extract": "type:subtree contains_punct:no contains_ascii:no text_len:7"
-            "template": "pj on '' '{}' ''"
-            "survival": 1
-            "period": timedelta(hours=0.5)
+            "type": "whoosh",
+            "extract": "type:subtree contains_punct:no contains_ascii:no text_len:7",
+            "template": "pj on '' '{}' ''",
+            "survival": 1,
+            "period": timedelta(hours=0.5),
         }
         for k,v in default_dict.items():
             self.properties.setdefault(k,v)
