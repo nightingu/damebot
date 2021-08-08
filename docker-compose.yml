@@ -12,6 +12,10 @@ services:
     networks: 
       - my_network
     image: ledenel/zh-nlp-full:main
+  spacy:
+    networks: 
+      - my_network
+    image: ledenel/python-zh-nlp:main
     # ports:
     #   - "9997:5000"
     
