@@ -72,7 +72,7 @@ class WhooshQueryModule:
         return self.properties[name]
     
     def switch(self, on, *, temp):
-        if self["on"] != on:
+        if self["on"] != on or not temp:
             self["on"] = on
             self["temporary_switch"] = temp
         self["last_activate"] = datetime.now()
@@ -104,7 +104,7 @@ class WhooshQueryModule:
         if random.random() <= self["survival"] and self["on"]:
             result = self.template(self.extract(text, text_only="yes"))
             self["last_activate"] = datetime.now()
-            self.properties.sync()    
+            self.properties.sync()
             return result
 
     def __setitem__(self, name, value):
