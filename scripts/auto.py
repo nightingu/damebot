@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 
 properties = "type|extract|template|survival|period"
-properties_actions = "clear|set|add"
+properties_actions = "clear|set"
 module_actions = "create|status|remove|on|off"
 
 f"""用于控制自动回复，生成自动回复用命令，以及管理自动回复模板，自动回复条件。
@@ -34,23 +34,25 @@ import os
 import re
 import random
 
-from json_store import JSONStore
+import shelve
 
 from datetime import datetime, timedelta
 
 class WhooshQueryModule:
     def __init__(self, name):
         self.name = name
-        self.properties = JSONStore(f"module/{name}.json")
+        self.properties = shelve.open(f"module/{name}.shelve")
         self.default_dict = {
             "type": "whoosh",
             "extract": "type:subtree contains_punct:no contains_ascii:no text_len:7",
             "template": "pj on '' '{}' ''",
             "survival": 1,
             "period": timedelta(hours=0.5),
+            "last_activate": datetime.now(),
         }
         for k,v in self.default_dict.items():
             self.properties.setdefault(k,v)
+        self.properties.sync()
 
     def __str__(self):
         return f"{self.name}\n" + "\n".join(f"  {k}: {v}" for k,v in self.properties.items())
@@ -61,6 +63,7 @@ class WhooshQueryModule:
     
     def clear(self, name):
         self[name] = self.default_dict[name]
+        self.properties.sync()
 
     def __getitem__(self, name):
         return self.properties[name]
@@ -83,7 +86,11 @@ class WhooshQueryModule:
         return fmt.format(*items)
 
     def gen(self, text):
-        return self.template(self.extract(text, text_only="yes"))
+        if random.random() <= self["survival"] and datetime.now() - self["last_activate"] > self["period"]:
+            result = self.template(self.extract(text, text_only="yes"))
+            self["last_activate"] = datetime.now()
+            self.properties.sync()    
+            return result
 
     def __setitem__(self, name, value):
         self.properties[name] = value
