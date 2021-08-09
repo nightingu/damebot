@@ -17,8 +17,8 @@ __doc__ = f"""用于控制自动回复，生成自动回复用命令，以及管
 Usage:
   auto ({module_actions}) all [permanent]
   auto ({module_actions}) <module> [permanent]
-  auto ({properties_actions}) ({properties}) all <args>...
-  auto ({properties_actions}) ({properties}) <module> <args>...
+  auto ({properties_actions}) ({properties}) all [<args>...]
+  auto ({properties_actions}) ({properties}) <module> [<args>...]
   auto gen <text>
   auto nlp inspect <text>
   auto nlp test <text> <args>...
@@ -142,6 +142,18 @@ if __name__ == '__main__':
         switch = arguments["on"]
         for module in module_name(arguments):
             WhooshQueryModule(module).switch(switch, temp=not arguments["permanent"])
+    elif arguments["clear"]:
+        properties_item = [name for name in properties.split("|") if arguments[name]]
+        assert len(properties_item) == 1, f"你只能清除一个属性，不能{properties_item}"
+        properties_item = properties_item[0]
+        for module in module_name(arguments):
+            WhooshQueryModule(module).clear(properties_item)
+    elif arguments["set"]:
+        properties_item = [name for name in properties.split("|") if arguments[name]]
+        assert len(properties_item) == 1, f"你只能设置一个属性，不能{properties_item}"
+        properties_item = properties_item[0]
+        for module in module_name(arguments):
+            WhooshQueryModule(module)[properties_item] = " ".join(arguments["<args>"])
     elif arguments["gen"]:
         cmds = []
         for module in list_module_name():
