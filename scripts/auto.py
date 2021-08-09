@@ -121,11 +121,15 @@ from pathlib import Path
 def list_module_name():
     return [p.stem for p in Path("module").glob("*")]
 
-def module_name(arguments):
+def module_name(arguments, create=False):
     if arguments["all"]:
         return list_module_name()
     else:
-        return [arguments["<module>"]]
+        name = arguments["<module>"]
+        if create or os.path.exists(f"module/{name}.shelve"):
+            return [name]
+        else:
+            raise ValueError(f"不存在模组 {name}。")
 
 from itertools import zip_longest
 import glob
