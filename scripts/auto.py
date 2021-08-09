@@ -40,6 +40,8 @@ import shelve
 
 from datetime import datetime, timedelta
 import pytimeparse
+import urllib
+import html
 
 convert_func = dict(
     type=str,
@@ -89,11 +91,13 @@ class WhooshQueryModule:
         self.properties.sync()
 
     def extract(self, text, text_only="no"):
+        with open("test.txt", "w") as f:
+            f.write(self["extract"])
         return requests.get(
-            'http://spacy:5000/', params={
-                "query": self["extract"],
+            'http://spacy:5000/', data={
+                "query": html.unescape(self["extract"]),
                 "text_only": text_only,
-                "text": text,
+                "text": html.unescape(text),
                 }).json()
     
     def template(self, extracted_data):
