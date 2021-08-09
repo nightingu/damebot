@@ -79,7 +79,7 @@ jobs:
           script: |
             mkdir --parents damebot_workspace
             cd app-damebot
-            docker pull ledenel/zh-nlp-full:main
+            docker-compose pull --ignore-pull-failures
             docker-compose logs | gzip > ../$(date +%Y-%m-%d-%H-%M-%S).log.gz
             docker-compose up -d --build
             sleep 5
