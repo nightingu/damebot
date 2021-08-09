@@ -37,6 +37,7 @@ import random
 import shelve
 
 from datetime import datetime, timedelta
+from timeparser import parsetimedelta
 
 class WhooshQueryModule:
     def __init__(self, name):
@@ -48,7 +49,7 @@ class WhooshQueryModule:
             "template": "pj on '' '{}' ''",
             "survival": 1,
             "period": timedelta(hours=0.5),
-            "on": True,
+            "on": False,
             "temporary_switch": False,
             "last_activate": datetime.now(),
         }
@@ -70,6 +71,13 @@ class WhooshQueryModule:
     def __getitem__(self, name):
         return self.properties[name]
     
+    def switch(self, on, *, temp):
+        if self["on"] != on:
+            self["on"] = on
+            self["temporary_switch"] = temp
+            self["last_activate"] = datetime.now()
+            self.properties.sync()
+
     def extract(self, text, text_only="no"):
         return requests.get(
             'http://spacy:5000/', params={
@@ -111,15 +119,23 @@ import glob
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='auto 0.0.1 自动命令生成', options_first=True)
     os.makedirs("module", exist_ok=True)
-    if arguments["on"]:
-        with open('auto-mode.touch', "w") as f:
-            pass
-    elif arguments["off"]:
-        os.remove('auto-mode.touch')
-    elif arguments["gen"]:
-        if os.path.exists('auto-mode.touch'):
-            if len(arguments['<text>']) == 7:
-                print(f"paiju on '' '{arguments['<text>']}' ''")
+    if arguments["create"]:
+        assert not arguments["all"], "你需要指定模组名来创建一个自动模组。"
+
+    elif arguments["status"]:
+        datetime
+    elif arguments["remove"]:
+        if arguments["remove all"]
+        os.remove(f"module/{arguments['<module>']}.shelve")
+    # if arguments["on"]:
+    #     with open('auto-mode.touch', "w") as f:
+    #         pass
+    # elif arguments["off"]:
+    #     os.remove('auto-mode.touch')
+    # elif arguments["gen"]:
+    #     if os.path.exists('auto-mode.touch'):
+    #         if len(arguments['<text>']) == 7:
+    #             print(f"paiju on '' '{arguments['<text>']}' ''")
     else:
         print("未知的指令")
         exit(1)
