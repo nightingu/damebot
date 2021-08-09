@@ -41,7 +41,7 @@ from datetime import datetime, timedelta
 class WhooshQueryModule:
     def __init__(self, name):
         self.name = name
-        self.properties = JSONStore(f"{name}")
+        self.properties = JSONStore(f"module/{name}.json")
         self.default_dict = {
             "type": "whoosh",
             "extract": "type:subtree contains_punct:no contains_ascii:no text_len:7",
@@ -68,7 +68,7 @@ class WhooshQueryModule:
     def extract(self, text, text_only="no"):
         return requests.get(
             'http://spacy:5000/', params={
-                "query": "type:subtree token_len:[2 TO] contains_punct:no",
+                "query": self["extract"],
                 "text_only": text_only,
                 "text": text,
                 }).json()
