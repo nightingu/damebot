@@ -177,7 +177,11 @@ if __name__ == '__main__':
         cmds = []
         for module in list_module_name():
             module = WhooshQueryModule(module)
-            cmd = module.gen(arguments["<text>"])
+            cmd = None
+            try:
+                cmd = module.gen(arguments["<text>"])
+            except Exception:
+                pass
             if cmd is not None:
                 cmds.append(cmd)
         if cmds:
@@ -188,11 +192,14 @@ if __name__ == '__main__':
             module = WhooshQueryModule(module)
             if arguments["verbose"]:
                 result = module.extract(arguments["<text>"], text_only="no")
-                if len(result) > 1:
+                if len(result) >= 1:
                     pprint(random.choice(result))
             result = module.extract(arguments["<text>"], text_only="yes")
             pprint(result)
-            print(module.template(result))
+            try:
+                print(module.template(result))
+            except Exception as e:
+                print(e)
             
 
     # if arguments["on"]:
