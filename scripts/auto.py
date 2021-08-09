@@ -20,8 +20,9 @@ Usage:
   auto ({properties_actions}) ({properties}) all [<args>...]
   auto ({properties_actions}) ({properties}) <module> [<args>...]
   auto gen <text>
-  auto nlp inspect <text>
-  auto nlp test <text> <args>...
+  auto debug all <text> [verbose]
+  auto debug <module> <text> [verbose]
+
 
 Options:
   -h --help     Show this screen.
@@ -113,6 +114,7 @@ class WhooshQueryModule:
 
 
 number_pattern = re.compile("([0-9]+)(\\-([0-9]+))?(\\-([0-9]+))?")
+from pprint import pprint
 
 from pathlib import Path
 def list_module_name():
@@ -163,6 +165,18 @@ if __name__ == '__main__':
                 cmds.append(cmd)
         if cmds:
             print(random.choice(cmds))
+    elif arguments["debug"]:
+        for module in module_name(arguments):
+            print(f"from {module}:")
+            module = WhooshQueryModule(module)
+            if arguments["verbose"]:
+                result = module.extract(arguments["<text>"], text_only="no")
+                if len(result) > 1:
+                    result = random.choice(result)
+            else:
+                result = module.extract(arguments["<text>"], text_only="yes")
+            pprint(result)
+            
 
     # if arguments["on"]:
     #     with open('auto-mode.touch', "w") as f:
