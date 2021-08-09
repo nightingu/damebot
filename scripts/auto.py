@@ -4,7 +4,7 @@ properties = "type|extract|template|survival|period"
 properties_actions = "clear|set"
 module_actions = "create|status|remove|on|off"
 
-f"""用于控制自动回复，生成自动回复用命令，以及管理自动回复模板，自动回复条件。
+__doc__ = f"""用于控制自动回复，生成自动回复用命令，以及管理自动回复模板，自动回复条件。
 你可以在其中添加支持的其他命令来使得机器人自动工作。
 每个模组可以控制开关(on/off)、设置自然语言提取和命令生成模板(extract/template)以及设置触发频率(survival/period)。
 开关默认会持续该模组period的时间。如果使用permanent选项则会永久开关。
@@ -37,7 +37,7 @@ import random
 import shelve
 
 from datetime import datetime, timedelta
-from timeparser import parsetimedelta
+import pytimeparse
 
 class WhooshQueryModule:
     def __init__(self, name):
@@ -46,7 +46,7 @@ class WhooshQueryModule:
         self.default_dict = {
             "type": "whoosh",
             "extract": "type:subtree contains_punct:no contains_ascii:no text_len:7",
-            "template": "pj on '' '{}' ''",
+            "template": "pj on '' {} ''",
             "survival": 1,
             "period": timedelta(hours=0.5),
             "on": False,
@@ -114,6 +114,16 @@ class WhooshQueryModule:
 
 number_pattern = re.compile("([0-9]+)(\\-([0-9]+))?(\\-([0-9]+))?")
 
+from pathlib import Path
+def list_module_name():
+    return [p.stem for p in Path("module").glob("*")]
+
+def module_name(arguments):
+    if arguments["all"]:
+        return list_module_name()
+    else:
+        return [arguments["<module>"]]
+
 from itertools import zip_longest
 import glob
 if __name__ == '__main__':
@@ -121,12 +131,27 @@ if __name__ == '__main__':
     os.makedirs("module", exist_ok=True)
     if arguments["create"]:
         assert not arguments["all"], "你需要指定模组名来创建一个自动模组。"
-
+        print(WhooshQueryModule(arguments["<module>"]))
     elif arguments["status"]:
-        datetime
+        for module in module_name(arguments):
+            print(WhooshQueryModule(module))
     elif arguments["remove"]:
-        if arguments["remove all"]
-        os.remove(f"module/{arguments['<module>']}.shelve")
+        for module in module_name(arguments):
+            os.remove(f"module/{module}.shelve")
+    elif arguments["on"] or arguments["off"]:
+        switch = arguments["on"]
+        for module in module_name(arguments):
+            WhooshQueryModule(module).switch(switch, temp=not arguments["permanent"])
+    elif arguments["gen"]:
+        cmds = []
+        for module in list_module_name():
+            module = WhooshQueryModule(module)
+            cmd = module.gen(arguments["<text>"])
+            if cmd is not None:
+                cmds.append(cmd)
+        if cmds:
+            print(random.choice(cmds))
+
     # if arguments["on"]:
     #     with open('auto-mode.touch', "w") as f:
     #         pass

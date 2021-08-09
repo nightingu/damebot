@@ -155,7 +155,7 @@ async def auto_reply_using_cmd(bot: "Bot", event: "Event", state: T_State, match
     message_raw = event.get_message().extract_plain_text()
     # logger.debug(f"{[c.cmd for c in root.sub_commands]}")
     auto_command = [c for c in root.sub_commands if "auto" in c.cmd_in_dice][0]
-    cwd, msg, task = await auto_command.cmd_run(bot=bot, event=event, state=state, matcher=matcher, cmd_replaced=f"gen '{message_raw}'")
+    cwd, msg, task = await auto_command.cmd_run(bot=bot, event=event, state=state, matcher=matcher, cmd_replaced=f"gen {shlex.quote(message_raw)}")
     command_line_needed = await task
     command_line_needed = command_line_needed.strip()
     if command_line_needed:
