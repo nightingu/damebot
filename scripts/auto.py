@@ -48,6 +48,8 @@ class WhooshQueryModule:
             "template": "pj on '' '{}' ''",
             "survival": 1,
             "period": timedelta(hours=0.5),
+            "on": True,
+            "temporary_switch": False,
             "last_activate": datetime.now(),
         }
         for k,v in self.default_dict.items():
@@ -86,7 +88,12 @@ class WhooshQueryModule:
         return fmt.format(*items)
 
     def gen(self, text):
-        if random.random() <= self["survival"] and datetime.now() - self["last_activate"] > self["period"]:
+        temp_expired = datetime.now() - self["last_activate"] > self["period"]
+        if self["temporary_switch"] and temp_expired:
+            self["on"] = not self["on"]
+            self["temporary_switch"] = False
+            self.properties.sync()
+        if random.random() <= self["survival"] and self["on"]:
             result = self.template(self.extract(text, text_only="yes"))
             self["last_activate"] = datetime.now()
             self.properties.sync()    
