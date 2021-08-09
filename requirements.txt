@@ -9,4 +9,4 @@ ring==0.7.3
 requests==2.25.1
 pypinyin==0.40.0
 zhon==1.1.5
-timeparser==0.6.0
+timeparser==0.7.4
