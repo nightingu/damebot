@@ -41,6 +41,14 @@ import shelve
 from datetime import datetime, timedelta
 import pytimeparse
 
+convert_func = dict(
+    type=str,
+    extract=str,
+    template=str,
+    survival=float,
+    period=lambda s:timedelta(seconds=pytimeparse.parse(s)),
+)
+
 class WhooshQueryModule:
     def __init__(self, name):
         self.name = name
@@ -160,7 +168,7 @@ if __name__ == '__main__':
         assert len(properties_item) == 1, f"你只能设置一个属性，不能{properties_item}"
         properties_item = properties_item[0]
         for module in module_name(arguments):
-            WhooshQueryModule(module)[properties_item] = " ".join(arguments["<args>"])
+            WhooshQueryModule(module)[properties_item] = convert_func[properties_item](" ".join(arguments["<args>"]))
     elif arguments["gen"]:
         cmds = []
         for module in list_module_name():
