@@ -75,8 +75,8 @@ class WhooshQueryModule:
         if self["on"] != on:
             self["on"] = on
             self["temporary_switch"] = temp
-            self["last_activate"] = datetime.now()
-            self.properties.sync()
+        self["last_activate"] = datetime.now()
+        self.properties.sync()
 
     def extract(self, text, text_only="no"):
         return requests.get(
