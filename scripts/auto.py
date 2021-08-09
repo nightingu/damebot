@@ -8,10 +8,11 @@ __doc__ = f"""用于控制自动回复，生成自动回复用命令，以及管
 你可以在其中添加支持的其他命令来使得机器人自动工作。
 每个模组可以控制开关(on/off)、设置自然语言提取和命令生成模板(extract/template)以及设置触发频率(survival/period)。
 开关默认会持续该模组period的时间。如果使用permanent选项则会永久开关。
+调整extract命令来指定从文本中提取的内容，然后使用template来指定将要生成的命令格式。
+survival控制模组的触发概率。
 
 自然语言提取的命令格式请参考https://whoosh.readthedocs.io/en/latest/querylang.html
-你可以使用nlp inspect <text>命令来查看支持的短语提取字段。它会默认执行type:subtree token_len:[2 TO] contains_punct:no命令来搜索两个及以上的词组成的短语（不包括标点符号）。
-使用nlp test <text> <query>命令来尝试提取短语。
+你可以使用auto debug <module> <text> 来调试指定模块的命令是否符合预期。auto debug <module> <text> verbose会显示更详细的信息用于调试extract命令
 
 
 Usage:
@@ -172,10 +173,10 @@ if __name__ == '__main__':
             if arguments["verbose"]:
                 result = module.extract(arguments["<text>"], text_only="no")
                 if len(result) > 1:
-                    result = random.choice(result)
-            else:
-                result = module.extract(arguments["<text>"], text_only="yes")
+                    pprint(random.choice(result))
+            result = module.extract(arguments["<text>"], text_only="yes")
             pprint(result)
+            print(module.template(result))
             
 
     # if arguments["on"]:
