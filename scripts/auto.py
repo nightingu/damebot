@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 
-properties = "type|extract|template|survival|period"
+properties = "type|extract|template|survival|period|word|cooldown"
 properties_actions = "clear|set"
 module_actions = "create|status|remove|on|off"
 
@@ -43,12 +43,27 @@ import pytimeparse
 import urllib
 import html
 
+bool_map = {
+    "1": True,
+    "0": False,
+    "t": True,
+    "f": False,
+    "y": True,
+    "n": False,
+    "yes": True,
+    "no": False,
+    "true": True,
+    "False": False,
+}
+
 convert_func = dict(
     type=str,
     extract=str,
     template=str,
     survival=float,
     period=lambda s:timedelta(seconds=pytimeparse.parse(s)),
+    word=lambda s:bool_map[s],
+    cooldown=lambda s:timedelta(seconds=pytimeparse.parse(s)),
 )
 
 class WhooshQueryModule:
@@ -58,9 +73,11 @@ class WhooshQueryModule:
         self.default_dict = {
             "type": "whoosh",
             "extract": "type:subtree contains_punct:no contains_ascii:no text_len:7",
+            "word": True,
             "template": "pj on '' {} ''",
             "survival": 1,
             "period": timedelta(hours=0.5),
+            "cooldown": timedelta(seconds=1),
             "on": False,
             "temporary_switch": False,
             "last_activate": datetime.now(),
@@ -103,7 +120,11 @@ class WhooshQueryModule:
     def template(self, extracted_data):
         fmt = self["template"]
         template_format_count = fmt.count('{') - fmt.count('{{') * 2
-        items = random.sample(extracted_data, k=template_format_count)
+        if self["word"]:
+            items = random.sample(extracted_data, k=template_format_count)
+        else:
+            items = random.choice(extracted_data)
+            items[template_format_count - 1] = "".join(items[template_format_count - 1:])
         if not isinstance(items[0], str):
             if "text" in items[0]:
                 items = [t.text for t in items]
@@ -115,7 +136,7 @@ class WhooshQueryModule:
             self["on"] = not self["on"]
             self["temporary_switch"] = False
             self.properties.sync()
-        if random.random() <= self["survival"] and self["on"]:
+        if random.random() <= self["survival"] and self["on"] and datetime.now() - self["last_activate"] > self["cooldown"]:
             result = self.template(self.extract(text, text_only="yes"))
             self["last_activate"] = datetime.now()
             self.properties.sync()
