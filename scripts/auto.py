@@ -115,6 +115,7 @@ class WhooshQueryModule:
                 "query": html.unescape(self["extract"]),
                 "text_only": text_only,
                 "text": html.unescape(text),
+                "word_mode": "yes" if self["word"] else "no", 
                 }).json()
     
     def template(self, extracted_data):
