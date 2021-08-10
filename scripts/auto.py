@@ -123,9 +123,9 @@ class WhooshQueryModule:
         template_format_count = fmt.count('{') - fmt.count('{{') * 2
         if self["word"]:
             items = random.choice(extracted_data)
+            items[template_format_count - 1] = "".join(items[template_format_count - 1:])
         else:
             items = random.sample(extracted_data, k=template_format_count)
-            items[template_format_count - 1] = "".join(items[template_format_count - 1:])
         if not isinstance(items[0], str):
             if "text" in items[0]:
                 items = [t.text for t in items]
