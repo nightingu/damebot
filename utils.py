@@ -282,7 +282,7 @@ sub-commands:
         logger.info(f"builded help")
         return (matcher, sub_matchers) if sub_matchers else matcher     
 
-    async def cmd_run(self, bot: Bot, event: Event, state: T_State, matcher: Matcher, cmd_replaced=None):
+    async def cmd_run(self, bot: Bot, event: Event, state: T_State, matcher: Matcher, cmd_replaced=None, empty_hint=True):
         regex=self.regex_
         logger.debug(f"event: {event}")
         logger.debug(f"state: {state}")
@@ -340,13 +340,13 @@ sub-commands:
             umask=umask_int,
             cwd=cwd,
             env_vars=env_vars,
-            empty_hint=cmd_replaced is None
+            empty_hint=empty_hint
         )
         return cwd, msg, task
 
     async def cmd_handler(self, bot: Bot, event: Event, state: T_State, matcher: Matcher, cmd=None):
         # get real command content
-        cwd, msg, task = await self.cmd_run(bot=bot, event=event, state=state, matcher=matcher, cmd_replaced=cmd)
+        cwd, msg, task = await self.cmd_run(bot=bot, event=event, state=state, matcher=matcher, cmd_replaced=cmd, empty_hint=True)
         if self.workspace_mode == WorkspaceMode.serial:
             queue = self.running_queues[cwd]
             task = queue.run(task)
