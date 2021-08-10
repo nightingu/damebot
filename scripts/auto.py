@@ -73,7 +73,7 @@ class WhooshQueryModule:
         self.default_dict = {
             "type": "whoosh",
             "extract": "type:subtree contains_punct:no contains_ascii:no text_len:7",
-            "word": True,
+            "word": False,
             "template": "pj on '' {} ''",
             "survival": 1,
             "period": timedelta(hours=0.5),
@@ -122,9 +122,9 @@ class WhooshQueryModule:
         fmt = self["template"]
         template_format_count = fmt.count('{') - fmt.count('{{') * 2
         if self["word"]:
-            items = random.sample(extracted_data, k=template_format_count)
-        else:
             items = random.choice(extracted_data)
+        else:
+            items = random.sample(extracted_data, k=template_format_count)
             items[template_format_count - 1] = "".join(items[template_format_count - 1:])
         if not isinstance(items[0], str):
             if "text" in items[0]:
