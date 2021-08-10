@@ -104,8 +104,7 @@ class WhooshQueryModule:
         if self["on"] != on or not temp:
             self["on"] = on
             self["temporary_switch"] = temp
-        self["last_activate"] = datetime.now()
-        self.properties.sync()
+        self.activate()
 
     def extract(self, text, text_only="no"):
         with open("test.txt", "w") as f:
@@ -139,9 +138,11 @@ class WhooshQueryModule:
             self.properties.sync()
         if random.random() <= self["survival"] and self["on"] and datetime.now() - self["last_activate"] > self["cooldown"]:
             result = self.template(self.extract(text, text_only="yes"))
-            self["last_activate"] = datetime.now()
-            self.properties.sync()
             return result
+
+    def activate(self):
+        self["last_activate"] = datetime.now()
+        self.properties.sync()
 
     def __setitem__(self, name, value):
         self.properties[name] = value
@@ -205,9 +206,11 @@ if __name__ == '__main__':
             except Exception:
                 pass
             if cmd is not None:
-                cmds.append(cmd)
+                cmds.append((module, cmd))
         if cmds:
-            print(random.choice(cmds))
+            module, cmd = random.choice(cmds)
+            print(cmd)
+            module.activate()
     elif arguments["debug"]:
         for module in module_name(arguments):
             print(f"from {module}:")
