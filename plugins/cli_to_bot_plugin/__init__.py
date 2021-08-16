@@ -174,4 +174,42 @@ async def auto_reply_using_cmd(bot: "Bot", event: "Event", state: T_State, match
         return result
 
 import json
+from typing import Optional, Dict, Any
+from nonebot.utils import escape_tag, DataclassEncoder
 
+@Bot.on_called_api
+async def log_api_result(bot: Bot, exception: Optional[Exception], api: str, data: Dict[str, Any], result: Any):
+    data_new = {
+        **data,
+        "api_call": api,
+        **result,
+    }
+    logger.debug(data_new)
+    log_command = [c for c in root.sub_commands if "log" in c.cmd_in_dice][0]
+    cwd, msg, task = await log_command.cmd_run(
+        bot=bot, 
+        event=None, 
+        state=None,
+        matcher=None, 
+        cmd_replaced=f"data {shlex.quote(json.dumps(data_new, cls=DataclassEncoder))}",
+        empty_hint=False,
+        group_id=data_new.get("group_id", None),
+    )
+    _ = await task
+
+from nonebot.message import event_preprocessor
+
+@event_preprocessor
+async def log_event_result(bot: Bot, event: Event, state: T_State):
+    log_command = [c for c in root.sub_commands if "log" in c.cmd_in_dice][0]
+    event_data = event.json()
+    cwd, msg, task = await log_command.cmd_run(
+        bot=bot, 
+        event=event, 
+        state=state,
+        matcher=None, 
+        cmd_replaced=f"data {shlex.quote(event_data)}",
+        empty_hint=False,
+    )
+
+    _ = await task

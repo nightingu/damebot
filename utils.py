@@ -147,15 +147,15 @@ async def command_env_settings(bot: Bot, event: Event, state: T_State, matcher: 
         env_vars["BOT_EVENT_TYPE"] = str(event.get_type())
         msg = str(event.get_plaintext())
         env_vars["BOT_EVENT_MESSAGE"] = msg
-    if regex is not None:
-        match = re.match(regex, msg, flags=re.MULTILINE | re.DOTALL)
-        if match:
-            _, origin_command, command_text = match.groups()
-            env_vars["BOT_EVENT_COMMAND"] = origin_command
-            env_vars["BOT_EVENT_COMMAND_ARGS"] = command_text
-    group_id = getattr(event, "group_id", None)
-    if group_id is not None:
-        env_vars["BOT_GROUP_ID"] = str(group_id)
+        group_id = getattr(event, "group_id", None)
+        if group_id is not None:
+            env_vars["BOT_GROUP_ID"] = str(group_id)
+        if regex is not None:
+            match = re.match(regex, msg, flags=re.MULTILINE | re.DOTALL)
+            if match:
+                _, origin_command, command_text = match.groups()
+                env_vars["BOT_EVENT_COMMAND"] = origin_command
+                env_vars["BOT_EVENT_COMMAND_ARGS"] = command_text
     return env_vars
 
 def nop():
@@ -315,6 +315,7 @@ sub-commands:
         env_futures = await asyncio.gather(self.command_env_async_factory(bot, event, state, matcher, regex), return_exceptions=True)
         env_vars = env_futures[0]
         if isinstance(env_vars, Exception):
+            logger.error(env_vars)
             await matcher.send(dame(str(env_vars)))
             raise env_vars
         umask_int = None
