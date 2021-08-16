@@ -7,7 +7,7 @@ docopt==0.6.2
 decorator==4.4.2
 py7zr==0.11.3
 ring==0.7.3
-requests==2.25.1
+requests==2.26.0
 pypinyin==0.40.0
 zhon==1.1.5
 pytimeparse==1.1.8
