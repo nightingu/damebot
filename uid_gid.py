@@ -24,13 +24,36 @@ async def execute_shell(cmd, cwd=WORKSPACE):
     logger.debug(f"usermod[{proc.returncode}] {stdout, stderr}")
     return proc.returncode, stdout, stderr
 
+def execute_shell_sync(cmd, cwd=WORKSPACE):
+    logger.debug(f"'{cmd}'")
+    proc = subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=cwd,
+        shell=True,
+    )
+    stdout, stderr, returncode = proc.stdout, proc.stderr, proc.returncode
+    logger.debug(f"usermod[{returncode}] {stdout, stderr}")
+    return returncode, stdout, stderr
+
 uid_map = None
 gid_map = None
 user_main_group = None
 user_extra_group = None
 
 def ensure_group_sync(group_name="damebot"):
-    return asyncio.run(ensure_group(group_name))
+    gid_extra = f" -g {gid_map[group_name]}" if group_name in gid_map else ""
+    cmd = f"groupadd -r{gid_extra} {group_name}"
+    code, out, err = execute_shell_sync(cmd)
+    success = code == 0 or code == 9
+    if not success:
+        logger.error(f"groupadd failed. {out, err}")
+    else:
+        logger.debug(f"groupadd succeed. {out, err}")
+        gid_map[group_name] = grp.getgrnam(group_name).gr_gid
+        gid_map.sync()
+    return success
 
 async def ensure_group(group_name="damebot"):
     gid_extra = f" -g {gid_map[group_name]}" if group_name in gid_map else ""
@@ -81,7 +104,37 @@ async def ensure_user(user_name, group_name="damebot", extra_group=tuple()):
     return success
    
 def ensure_user_sync(user_name, group_name="damebot", extra_group=tuple()):
-    return asyncio.run(ensure_user(user_name, group_name, extra_group))
+    logger.debug(f"ensuring user {user_name} and group {group_name} {extra_group} exists.")
+    uid_extra = f" -u {uid_map[user_name]}" if user_name in uid_map else ""
+    group_exist = ensure_group_sync(group_name)
+    extra_group_values = [ensure_group_sync(group) for group in extra_group]
+    extra_group_exists = all(extra_group_values)
+    group_all_exists = group_exist and extra_group_exists
+    cmd = f"useradd -r {user_name}{uid_extra} -Ng {group_name}"
+    code, out, err = execute_shell_sync(cmd)
+    success = group_all_exists and (code == 0 or code == 9)
+    for group in extra_group:
+        cmd_usermod = f"usermod {user_name} -aG {group}"
+        code, out, err = execute_shell_sync(cmd_usermod)
+        success = success and (code == 0 or code == 9)
+    if not success:
+        logger.error(f"useradd failed. ")
+    else:
+        logger.debug(f"useradd succeed.")
+        uid_map[user_name] = pwd.getpwnam(user_name).pw_uid
+        uid_map.sync()
+        gid_reverse = {v:k for k,v in gid_map.items()}
+        main_group_name = gid_reverse[pwd.getpwnam(user_name).pw_gid]
+        logger.debug(f"group {main_group_name} for {user_name}")
+        user_main_group[user_name] = main_group_name
+        groups = [g.gr_name for g in grp.getgrall() if user_name in g.gr_mem]
+        logger.debug(f"groups {groups} for {user_name}")
+        if main_group_name in groups:
+            groups.remove(main_group_name)
+        user_extra_group[user_name] = groups
+        user_main_group.sync()
+        user_extra_group.sync()
+    return success
     
 default_group = "damebot"
 

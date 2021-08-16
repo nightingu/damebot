@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 from uid_gid import init_workspace
 import nonebot
 from nonebot import drivers
@@ -8,9 +11,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from nonebot.adapters.cqhttp import Bot as CQHTTPBot
 
 init_workspace()
+
+
 nonebot.init(command_start = {',', '，'})
+app = nonebot.get_asgi()
+
 driver = nonebot.get_driver()
-app = nonebot.get_app()
 
 app.add_middleware(
     CORSMiddleware,

@@ -173,4 +173,5 @@ async def auto_reply_using_cmd(bot: "Bot", event: "Event", state: T_State, match
         result = await main_cmd_object.cmd_handler(bot=bot, event=event, state=state, matcher=matcher, cmd=args)
         return result
 
+import json
 
