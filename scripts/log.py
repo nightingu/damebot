@@ -38,8 +38,11 @@ def recent_events(all_list, filter=lambda x: True):
                 if filter(json_item):
                     yield json_item
 
+def pure_text(log_item):
+    return "".join(t["data"]["text"] for t in log_item["message"] if "data" in t and "text" in t["data"])
+
 def json_filter(item):
-    return "message" in item and len(str(item["message"])) < 128
+    return "message" in item and 0 < len(pure_text(item)) < 128
 
 from datetime import datetime, tzinfo
 from dateutil import tz
@@ -60,13 +63,13 @@ if __name__ == '__main__':
         all_list = list(reversed(sorted(Path("log").glob("**/*.jsonl"))))
         number = int(arguments["<number>"])
         for _, log_item in zip(range(number), recent_events(all_list, filter=json_filter)):
-            user = log_item["self_id"] if "api_call" in log_item else log_item["group_id"]
+            user = log_item["self_id"] if "api_call" in log_item else log_item["user_id"]
             time = datetime.fromtimestamp(log_item["time"])
             time = time.astimezone(tz.gettz("Asia/Shanghai"))
             time = time.strftime("%m-%d %H:%M") + " " + time.tzname()
-            text = "".join(t["data"]["text"] for t in log_item["message"] if "data" in t and "text" in t["data"])
-            print(f"{time} {user}")
-            print(f"  {text}")
+            text = pure_text(log_item)
+            print(f"{time}")
+            print(f"{user}:[{text}]")
     elif arguments["remove"]:
         year, month, day = [int(arguments[x]) for x in "<year> <month> <day>".split()]
         month = "%02d" % month
