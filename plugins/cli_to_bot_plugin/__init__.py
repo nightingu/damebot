@@ -104,6 +104,13 @@ help|h: damebot! if you see だめ/ダメ/駄目, there must be something wrong.
             per_group=True,
             workespace_mode=WorkspaceMode.concurrent,
         ),
+        CommandBuilder(
+            script(PROJECT_SCRIPT / "log.py"), 
+            "log",
+            priority_delta=-1, 
+            per_group=True,
+            workespace_mode=WorkspaceMode.concurrent,
+        ),
     ]
 )
 
