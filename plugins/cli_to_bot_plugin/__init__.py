@@ -176,6 +176,7 @@ async def auto_reply_using_cmd(bot: "Bot", event: "Event", state: T_State, match
 import json
 from typing import Optional, Dict, Any
 from nonebot.utils import escape_tag, DataclassEncoder
+from datetime import datetime
 
 @Bot.on_called_api
 async def log_api_result(bot: Bot, exception: Optional[Exception], api: str, data: Dict[str, Any], result: Any):
@@ -183,6 +184,8 @@ async def log_api_result(bot: Bot, exception: Optional[Exception], api: str, dat
         **data,
         "api_call": api,
         **result,
+        "self_id": bot.self_id,
+        "time": int(datetime.now().timestamp()),
     }
     logger.debug(data_new)
     log_command = [c for c in root.sub_commands if "log" in c.cmd_in_dice][0]

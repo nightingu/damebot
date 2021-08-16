@@ -8,6 +8,8 @@ __doc__ = f"""用来记录消息记录。
 Usage:
   log data <json_text>
   log tail <number>
+  log remove <year> <month> <day>
+
 
 
 Options:
@@ -28,11 +30,19 @@ from pathlib import Path
 import os
 import html
 
-def recent_events(all_list):
+def recent_events(all_list, filter=lambda x: True):
     for path in all_list:
         with path.open("r") as f:
-            yield from reversed(list(f))
+            for item in reversed(list(f)):
+                json_item = json.loads(item)
+                if filter(json_item):
+                    yield json_item
 
+def json_filter(item):
+    return "message" in item and len(str(item["message"])) < 128
+
+from datetime import datetime, tzinfo
+from dateutil import tz
 
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='auto 0.0.1 自动命令生成', options_first=True)
@@ -43,14 +53,26 @@ if __name__ == '__main__':
     if arguments["data"]:
         with open(f"log/{year}/{month}/{day}.jsonl", "a") as f:
             json_val = html.unescape(arguments["<json_text>"])
-            if json.loads(json_val):
+            item = json.loads(json_val)
+            if item and isinstance(item, dict):
                 print(json_val,file=f)
     elif arguments["tail"]:
         all_list = list(reversed(sorted(Path("log").glob("**/*.jsonl"))))
         number = int(arguments["<number>"])
-        for _, log_item in zip(range(number), recent_events(all_list)):
-            pprint(json.loads(log_item))
-
+        for _, log_item in zip(range(number), recent_events(all_list, filter=json_filter)):
+            user = log_item["self_id"] if "api_call" in log_item else log_item["group_id"]
+            time = datetime.fromtimestamp(log_item["time"])
+            time = time.astimezone(tz.gettz("Asia/Shanghai"))
+            time = time.strftime("%m-%d %H:%M") + " " + time.tzname()
+            text = "".join(t["data"]["text"] for t in log_item["message"] if "data" in t and "text" in t["data"])
+            print(f"{time} {user}")
+            print(f"  {text}")
+    elif arguments["remove"]:
+        year, month, day = [int(arguments[x]) for x in "<year> <month> <day>".split()]
+        month = "%02d" % month
+        day = "%02d" % day
+        year = "%04d" % year
+        exit(os.remove(f"log/{year}/{month}/{day}.jsonl"))
             
     # if arguments["on"]:
     #     with open('auto-mode.touch', "w") as f:
