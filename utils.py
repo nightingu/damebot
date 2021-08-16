@@ -139,21 +139,23 @@ async def command_env_settings(bot: Bot, event: Event, state: T_State, matcher: 
     else:
         old_python_env = old_python_env.split(":")
     env_vars["PYTHONPATH"] = ":".join(old_python_env + [str(PROJECT_ROOT)])
-    env_vars["BOT_EVENT_TYPE"] = str(event.get_type())
-    msg = str(event.get_plaintext())
-    env_vars["BOT_EVENT_MESSAGE"] = msg
-    match = re.match(regex, msg, flags=re.MULTILINE | re.DOTALL)
-    if match:
-        _, origin_command, command_text = match.groups()
-        env_vars["BOT_EVENT_COMMAND"] = origin_command
-        env_vars["BOT_EVENT_COMMAND_ARGS"] = command_text
+    if event is not None:
+        env_vars["BOT_USER_ID"] = str(event.get_user_id())
+        env_vars["BOT_SESSION_ID"] = str(event.get_session_id())
+        if event.is_tome():
+            env_vars["TO_BOT"] = str(1)
+        env_vars["BOT_EVENT_TYPE"] = str(event.get_type())
+        msg = str(event.get_plaintext())
+        env_vars["BOT_EVENT_MESSAGE"] = msg
+    if regex is not None:
+        match = re.match(regex, msg, flags=re.MULTILINE | re.DOTALL)
+        if match:
+            _, origin_command, command_text = match.groups()
+            env_vars["BOT_EVENT_COMMAND"] = origin_command
+            env_vars["BOT_EVENT_COMMAND_ARGS"] = command_text
     group_id = getattr(event, "group_id", None)
     if group_id is not None:
         env_vars["BOT_GROUP_ID"] = str(group_id)
-    env_vars["BOT_USER_ID"] = str(event.get_user_id())
-    env_vars["BOT_SESSION_ID"] = str(event.get_session_id())
-    if event.is_tome():
-        env_vars["TO_BOT"] = str(1)
     return env_vars
 
 def nop():
@@ -282,23 +284,24 @@ sub-commands:
         logger.info(f"builded help")
         return (matcher, sub_matchers) if sub_matchers else matcher     
 
-    async def cmd_run(self, bot: Bot, event: Event, state: T_State, matcher: Matcher, cmd_replaced=None, empty_hint=True):
+    async def cmd_run(self, bot: Bot, event: Event, state: T_State, matcher: Matcher, cmd_replaced=None, empty_hint=True, group_id=None):
         regex=self.regex_
-        logger.debug(f"event: {event}")
-        logger.debug(f"state: {state}")
-        msg = event.get_message().extract_plain_text()
-        logger.debug(f"got message '{msg}'")
         if cmd_replaced is None:
+            logger.debug(f"event: {event}")
+            logger.debug(f"state: {state}")
+            msg = event.get_message().extract_plain_text()
+            logger.debug(f"got message '{msg}'")
             _, origin_command, command_text = re.match(regex, msg, flags=re.MULTILINE | re.DOTALL).groups()
             if self.complete_match and command_text and command_text[0] not in string.whitespace:
                 return
             command_text = command_text.strip()
         else:
             command_text = cmd_replaced
+            msg = None
         logger.debug(f"got command text '{command_text}'")
-        group_id = None
         if self.per_group:
-            group_id = getattr(event, "group_id", user_group_map.get(event.get_user_id()))
+            if event is not None:
+                group_id = getattr(event, "group_id", user_group_map.get(event.get_user_id()))
             if group_id is None:
                 return
         cwd = GROUP/str(group_id) if self.per_group else SHARED
