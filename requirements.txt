@@ -8,7 +8,7 @@ decorator==4.4.2
 py7zr==0.11.3
 ring==0.7.3
 requests==2.25.1
-pypinyin==0.40.0
+pypinyin==0.42.1
 zhon==1.1.5
 pytimeparse==1.1.8
 python-dateutil==2.8.2
