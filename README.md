@@ -37,6 +37,7 @@ Aimed at easy deploy and development.
 - 你需要生成一对公私钥，私钥放入本仓库secret的KEY字段，公钥放入目标机器的`~/.ssh/authorized_keys`，来保证rsync命令授权复制到app-damebot目录。
 - 请保证硬盘空间和内存足够。目前大概需要10G硬盘基础空间以及1.5G内存（深度学习模型存储暂时由docker管理，请注意扩容`/var`分区）。
 - 如果是旧数据迁移的情况，请使用tar cvpzf <备份的文件名>.tar.gz damebot_workspace --exclude=damebot_workspace/cache/logs备份damebot数据并解压到新的机器（用户目录下）。
+- > 请注意解压时也要带权限，并且要使用sudo解压（`sudo tar xvpzf <备份的文件名>.tar.gz`）。damebot依赖真实文件权限管理组间访问性。
 
 ## 在线云开发
 
