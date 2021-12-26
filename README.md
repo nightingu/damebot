@@ -25,7 +25,18 @@ Aimed at easy deploy and development.
 3. 此时修改go-cqhttp产生的config.hjson，修改reverse_url项，改为`ws://<主机名>:<端口>/cqhttp/ws`
 4. 重新启动go-cqhttp，然后向你的QQ发送`.echo hello world`。如果你的QQ回复你了，那么部署就完成了。
 
+## 自动部署配置
+
 项目提供github actions来在项目Release的时候连接特定的远程主机，在当前用户目录下建立app-damebot目录，并使用Release的代码执行步骤3，以后便不再需要手动部署。
+
+### 部署机器注意事项
+- 需要安装docker、docker-compose、rsync。
+- 需要能够从github访问。
+- 请保证能够使用secret中的USER和PASSWORD，使用ssh登录远程主机。
+- > 主机需要支持密码登录。请确认并修改`/etc/ssh/sshd_config`中`PasswordAuthentication yes`选项，然后重启sshd服务`service sshd restart`。
+- 你需要生成一对公私钥，私钥放入本仓库secret的KEY字段，公钥放入目标机器的`~/.ssh/authorized_keys`，来保证rsync命令授权复制到app-damebot目录。
+- 请保证硬盘空间和内存足够。目前大概需要10G硬盘基础空间以及1.5G内存（深度学习模型存储暂时由docker管理，请注意扩容`/var`分区）。
+- 如果是旧数据迁移的情况，请使用tar cvpzf <备份的文件名>.tar.gz damebot_workspace --exclude=damebot_workspace/cache/logs备份damebot数据并解压到新的机器（用户目录下）。
 
 ## 在线云开发
 
