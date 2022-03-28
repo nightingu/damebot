@@ -1,1 +1,1 @@
-watchdog[watchmedo]==1.0.2
+watchdog[watchmedo]==2.1.7
