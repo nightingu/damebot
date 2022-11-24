@@ -1,4 +1,4 @@
-nonebot2==2.0.0a15
+nonebot2==2.0.0rc2
 nonebot-adapter-cqhttp==2.0.0a15
 nonebot-plugin-test==0.3.0
 xdice==1.2.1
